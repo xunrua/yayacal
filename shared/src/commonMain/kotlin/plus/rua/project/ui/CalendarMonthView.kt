@@ -46,13 +46,16 @@ fun CalendarMonthView(
     var calendarHeightPx by remember { mutableIntStateOf(0) }
     var screenHeightPx by remember { mutableIntStateOf(0) }
     var expandedCalendarHeightPx by remember { mutableIntStateOf(0) }
+    var monthHeaderHeightPx by remember { mutableIntStateOf(0) }
+    var weekdayHeaderHeightPx by remember { mutableIntStateOf(0) }
 
-    // collapseProgress: 0f=月视图(6行), 1f=周视图(1行)
-    // 折叠偏移量 = 进度 × 展开高度的5/6（保留1行可见）
+    // 日历网格高度 = 总高度 - MonthHeader - WeekdayHeader
+    val expandedGridHeightPx = expandedCalendarHeightPx - monthHeaderHeightPx - weekdayHeaderHeightPx
+    // 折叠偏移量 = 进度 × 网格5行高度（保留1行可见）
     val collapseOffsetPx = if (viewModel.isCollapsed) {
         0
     } else {
-        -(viewModel.collapseProgress * expandedCalendarHeightPx * 5f / 6f).toInt()
+        -(viewModel.collapseProgress * expandedGridHeightPx * 5f / 6f).toInt()
     }
     val cardTopPx = if (viewModel.isCollapsed) {
         calendarHeightPx
@@ -79,9 +82,16 @@ fun CalendarMonthView(
             MonthHeader(
                 year = currentYear,
                 month = currentMonth,
-                weekNumber = viewModel.getIsoWeekNumber(viewModel.selectedDate)
+                weekNumber = viewModel.getIsoWeekNumber(viewModel.selectedDate),
+                modifier = Modifier.onSizeChanged { size ->
+                    monthHeaderHeightPx = size.height
+                }
             )
-            WeekdayHeader(modifier = Modifier.fillMaxWidth())
+            WeekdayHeader(
+                modifier = Modifier.fillMaxWidth().onSizeChanged { size ->
+                    weekdayHeaderHeightPx = size.height
+                }
+            )
             if (viewModel.isCollapsed) {
                 WeekPager(
                     selectedDate = viewModel.selectedDate,
