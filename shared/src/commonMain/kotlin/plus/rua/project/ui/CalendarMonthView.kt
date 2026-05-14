@@ -15,6 +15,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -65,6 +66,14 @@ fun CalendarMonthView(
 
     val cardTopPx = headerHeightPx + gridHeightPx
     val cardHeightPx = screenHeightPx - cardTopPx
+
+    val pagerModifier = if (p > 0.01f && expandedGridHeightPx > 0) {
+        Modifier
+            .height(with(density) { gridHeightPx.toDp() })
+            .clipToBounds()
+    } else {
+        Modifier
+    }
 
     if (p > 0f) {
         println("[View] p=$p monthH=$monthHeaderHeightPx weekdayH=$weekdayHeaderHeightPx expandedGridH=$expandedGridHeightPx gridH=$gridHeightPx cardTop=$cardTopPx cardH=$cardHeightPx screenH=$screenHeightPx calH=$calendarHeightPx isCollapsed=${viewModel.isCollapsed}")
@@ -117,7 +126,8 @@ fun CalendarMonthView(
                         currentYear = year
                         currentMonth = month
                     },
-                    collapseProgress = viewModel.collapseProgress
+                    collapseProgress = viewModel.collapseProgress,
+                    modifier = pagerModifier
                 )
             }
         }
