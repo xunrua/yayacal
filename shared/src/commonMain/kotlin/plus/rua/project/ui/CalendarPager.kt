@@ -12,8 +12,19 @@ import androidx.compose.ui.Modifier
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
+/** 无限分页中心页，用于 HorizontalPager 的起始位置 */
 private const val START_PAGE = Int.MAX_VALUE / 2
 
+/**
+ * 月度日历分页器，HorizontalPager 实现无限左右滑动切换月份。
+ *
+ * @param selectedDate 当前选中日期
+ * @param today 今天的日期
+ * @param onDateClick 日期点击回调
+ * @param onMonthChanged 月份切换回调，滑动到新月份时触发
+ * @param collapseProgress 折叠进度，0f=展开，1f=折叠
+ * @param modifier 外部布局修饰符
+ */
 @Composable
 fun CalendarPager(
     selectedDate: LocalDate,
@@ -68,15 +79,17 @@ fun CalendarPager(
     }
 }
 
-@Suppress("DEPRECATION")
+@Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
 private fun LocalDate.toYearMonth(): Pair<Int, Int> = Pair(year, monthNumber)
 
+// 页码→年月：偏移量 + 初始月份的绝对月数，再拆分回年月
 private fun pageToYearMonth(page: Int, initial: Pair<Int, Int>): Pair<Int, Int> {
     val offset = page - START_PAGE
     val totalMonths = initial.first * 12 + (initial.second - 1) + offset
     return Pair(totalMonths / 12, totalMonths % 12 + 1)
 }
 
+// 年月→页码：目标与初始的绝对月数差 + 起始页
 private fun yearMonthToPage(yearMonth: Pair<Int, Int>, initial: Pair<Int, Int>): Int {
     val targetTotal = yearMonth.first * 12 + (yearMonth.second - 1)
     val initialTotal = initial.first * 12 + (initial.second - 1)

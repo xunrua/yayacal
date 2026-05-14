@@ -25,6 +25,13 @@ import kotlinx.datetime.todayIn
 import kotlin.time.Clock
 import plus.rua.project.CalendarViewModel
 
+/**
+ * 日历主界面，包含月/周视图切换和折叠动画。
+ *
+ * 折叠时日历从月视图（6行）收缩为周视图（1行），BottomCard 同步上移填充空间。
+ *
+ * @param modifier 外部布局修饰符
+ */
 @Composable
 fun CalendarMonthView(
     modifier: Modifier = Modifier
@@ -40,6 +47,8 @@ fun CalendarMonthView(
     var screenHeightPx by remember { mutableIntStateOf(0) }
     var expandedCalendarHeightPx by remember { mutableIntStateOf(0) }
 
+    // collapseProgress: 0f=月视图(6行), 1f=周视图(1行)
+    // 折叠偏移量 = 进度 × 展开高度的5/6（保留1行可见）
     val collapseOffsetPx = if (viewModel.isCollapsed) {
         0
     } else {
@@ -62,6 +71,7 @@ fun CalendarMonthView(
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp).onSizeChanged { size ->
             calendarHeightPx = size.height
+            // 仅在首次展开时记录完整日历高度，折叠后不再覆盖
             if (!viewModel.isCollapsed && viewModel.collapseProgress < 0.01f) {
                 expandedCalendarHeightPx = size.height
             }
@@ -79,7 +89,7 @@ fun CalendarMonthView(
                     onDateClick = { date -> viewModel.selectDate(date) },
                     onWeekChanged = { weekMonday ->
                         currentYear = weekMonday.year
-                        @Suppress("DEPRECATION")
+                        @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
                         currentMonth = weekMonday.monthNumber
                     }
                 )

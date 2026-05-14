@@ -19,8 +19,18 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 
+/** 无限分页中心页，用于 HorizontalPager 的起始位置 */
 private const val START_PAGE = Int.MAX_VALUE / 2
 
+/**
+ * 周视图分页器，折叠状态下显示选中日期所在周，支持左右滑动切换周。
+ *
+ * @param selectedDate 当前选中日期
+ * @param today 今天的日期
+ * @param onDateClick 日期点击回调
+ * @param onWeekChanged 周切换回调，滑动到新周时触发，参数为该周周一日期
+ * @param modifier 外部布局修饰符
+ */
 @Composable
 fun WeekPager(
     selectedDate: LocalDate,

@@ -14,6 +14,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import kotlinx.datetime.LocalDate
 
+/**
+ * 单个日期单元格，显示日期数字并支持选中/今天/非当月状态。
+ *
+ * @param date 日期
+ * @param isCurrentMonth 是否属于当前显示月份
+ * @param isSelected 是否为选中日期
+ * @param isToday 是否为今天
+ * @param onClick 点击回调
+ * @param modifier 外部布局修饰符
+ */
 @Composable
 fun DayCell(
     date: LocalDate,

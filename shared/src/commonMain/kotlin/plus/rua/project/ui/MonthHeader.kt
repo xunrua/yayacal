@@ -11,6 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/**
+ * 月份标题栏，显示"年月"文字和 ISO 周号。
+ *
+ * @param year 年份
+ * @param month 月份（1-12）
+ * @param weekNumber 当前 ISO 周号
+ * @param modifier 外部布局修饰符
+ */
 @Composable
 fun MonthHeader(
     year: Int,

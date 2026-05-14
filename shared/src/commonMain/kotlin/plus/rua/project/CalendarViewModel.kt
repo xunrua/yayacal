@@ -23,6 +23,11 @@ data class CalendarDay(
     val isSelected: Boolean
 )
 
+/**
+ * 日历状态管理，持有选中日期、折叠状态和 ISO 周号计算逻辑。
+ *
+ * @param coroutineScope 协程作用域，用于驱动折叠动画
+ */
 class CalendarViewModel(private val coroutineScope: CoroutineScope) {
     private val today: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
@@ -32,11 +37,12 @@ class CalendarViewModel(private val coroutineScope: CoroutineScope) {
     var isCollapsed by mutableStateOf(false)
         private set
 
+    // collapseProgress: 0f=展开(月视图), 1f=折叠(周视图)
     private val _collapseAnimatable = Animatable(0f)
     val collapseProgress: Float get() = _collapseAnimatable.value
 
     val currentYear: Int get() = selectedDate.year
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     val currentMonth: Int get() = selectedDate.monthNumber
 
     fun selectDate(date: LocalDate) {
@@ -50,6 +56,7 @@ class CalendarViewModel(private val coroutineScope: CoroutineScope) {
         }
     }
 
+    // 拖拽超过 50% 时自动折叠到周视图，否则回弹到月视图
     fun onDragEnd() {
         coroutineScope.launch {
             if (_collapseAnimatable.value > 0.5f) {
@@ -67,6 +74,12 @@ class CalendarViewModel(private val coroutineScope: CoroutineScope) {
         }
     }
 
+    /**
+     * 计算给定日期的 ISO 8601 周号。
+     *
+     * @param date 目标日期
+     * @return ISO 周号（1-53）
+     */
     fun getIsoWeekNumber(date: LocalDate): Int {
         val jan4 = LocalDate(date.year, 1, 4)
         val jan4DayOfWeek = jan4.dayOfWeek.ordinal
@@ -91,12 +104,13 @@ class CalendarViewModel(private val coroutineScope: CoroutineScope) {
         return diff / 7 + 1
     }
 
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     fun getMonthDays(year: Int, month: Int): List<CalendarDay> {
         val firstOfMonth = LocalDate(year, month, 1)
         val dayOfWeekOffset = firstOfMonth.dayOfWeek.ordinal
         val startDate = firstOfMonth.minus(DatePeriod(days = dayOfWeekOffset))
 
+        // 6行×7列=42格，覆盖跨月首尾周，保证网格完整
         return (0 until 42).map { i ->
             val date = startDate.plus(DatePeriod(days = i))
             CalendarDay(

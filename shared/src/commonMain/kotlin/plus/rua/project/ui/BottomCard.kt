@@ -20,6 +20,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import plus.rua.project.CalendarViewModel
 
+/**
+ * 底部卡片，折叠状态下支持垂直拖拽触发折叠动画。
+ *
+ * @param viewModel 日历 ViewModel，用于读取折叠状态和驱动拖拽
+ * @param modifier 外部布局修饰符
+ */
 @Composable
 fun BottomCard(
     viewModel: CalendarViewModel,
