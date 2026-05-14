@@ -31,6 +31,7 @@ import kotlin.time.Clock
 import plus.rua.project.CalendarViewModel
 
 private const val START_PAGE = Int.MAX_VALUE / 2
+private const val TAG = "CalMonthView"
 
 /**
  * 日历主界面，包含月/周视图切换和折叠动画。
@@ -57,14 +58,17 @@ fun CalendarMonthView(
     var screenHeightPx by remember { mutableIntStateOf(0) }
     var currentWeeksCount by remember { mutableIntStateOf(6) }
     var expandedWeeksCount by remember { mutableIntStateOf(6) }
+    var lockedRowHeightPx by remember { mutableIntStateOf(0) }
 
     val pagerState = rememberPagerState(initialPage = START_PAGE, pageCount = { Int.MAX_VALUE })
 
     val p = viewModel.collapseProgress
     val headerHeightPx = monthHeaderHeightPx + weekdayHeaderHeightPx
 
-    // 单行高度：从首次展开时测量并锁定（基于 expandedWeeksCount）
-    val rowHeightPx = if (calendarHeightPx > 0 && expandedWeeksCount > 0) {
+    // 行高：优先使用锁定值（折叠过程中不变），否则用实时计算初始化
+    val rowHeightPx = if (lockedRowHeightPx > 0) {
+        lockedRowHeightPx
+    } else if (calendarHeightPx > 0 && expandedWeeksCount > 0) {
         (calendarHeightPx - headerHeightPx) / expandedWeeksCount
     } else 0
 
@@ -95,6 +99,10 @@ fun CalendarMonthView(
     val cardTopPx = headerHeightPx + gridHeightPx + rowPaddingPx
     val cardHeightPx = screenHeightPx - cardTopPx
 
+    if (p > 0.01f) {
+        println("[$TAG] height: p=$p, rowH=$rowHeightPx, weeks=$interpolatedWeeks, gridH=$gridHeightPx, headerH=$headerHeightPx, cardTop=$cardTopPx, cardH=$cardHeightPx, isCollapsed=${viewModel.isCollapsed}")
+    }
+
     val pagerModifier = if (p > 0.01f && rowHeightPx > 0) {
         Modifier
             .height(with(density) { gridHeightPx.toDp() })
@@ -113,7 +121,11 @@ fun CalendarMonthView(
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp).onSizeChanged { size ->
                 calendarHeightPx = size.height
-                if (p < 0.01f) expandedWeeksCount = currentWeeksCount
+                if (p < 0.01f) {
+                    expandedWeeksCount = currentWeeksCount
+                    val calculated = (size.height - headerHeightPx) / currentWeeksCount
+                    if (calculated > 0) lockedRowHeightPx = calculated
+                }
             }) {
             MonthHeader(
                 year = currentYear,
@@ -130,6 +142,7 @@ fun CalendarMonthView(
             )
             // 完全折叠且无动画时显示 WeekPager，否则显示 CalendarPager（含下拉恢复过程）
             if (viewModel.isCollapsed && viewModel.collapseProgress >= 1f) {
+                println("[$TAG] showing WeekPager: isCollapsed=${viewModel.isCollapsed}, p=${viewModel.collapseProgress}")
                 WeekPager(
                     selectedDate = viewModel.selectedDate,
                     today = today,
