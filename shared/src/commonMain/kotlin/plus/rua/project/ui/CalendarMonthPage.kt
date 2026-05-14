@@ -1,6 +1,5 @@
 package plus.rua.project.ui
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,22 +36,19 @@ fun CalendarMonthPage(
 
     Column(modifier = modifier) {
         weeks.forEachIndexed { weekIndex, week ->
-            val animatedProgress = animateFloatAsState(
-                targetValue = collapseProgress,
-                label = "collapse-$weekIndex"
-            ).value
+            val progress = collapseProgress
 
             val isAboveSelected = weekIndex < selectedWeekIndex
             val isBelowSelected = weekIndex > selectedWeekIndex
 
             val offsetY = when {
-                isAboveSelected -> -animatedProgress * 200f
-                isBelowSelected -> animatedProgress * 200f
+                isAboveSelected -> -progress * 200f
+                isBelowSelected -> progress * 200f
                 else -> 0f
             }
 
             val alpha = when {
-                isAboveSelected || isBelowSelected -> 1f - animatedProgress
+                isAboveSelected || isBelowSelected -> 1f - progress
                 else -> 1f
             }
 

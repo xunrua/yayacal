@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -20,9 +21,10 @@ import plus.rua.project.CalendarViewModel
 
 @Composable
 fun CalendarMonthView(
-    viewModel: CalendarViewModel = remember { CalendarViewModel() },
     modifier: Modifier = Modifier
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val viewModel = remember { CalendarViewModel(coroutineScope) }
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
     var currentYear by remember { mutableIntStateOf(viewModel.currentYear) }
     var currentMonth by remember { mutableIntStateOf(viewModel.currentMonth) }

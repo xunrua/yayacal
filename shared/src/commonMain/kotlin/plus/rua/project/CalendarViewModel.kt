@@ -1,8 +1,11 @@
 package plus.rua.project
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -19,7 +22,7 @@ data class CalendarDay(
     val isSelected: Boolean
 )
 
-class CalendarViewModel {
+class CalendarViewModel(private val coroutineScope: CoroutineScope) {
     private val today: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
     var selectedDate by mutableStateOf(today)
@@ -28,8 +31,8 @@ class CalendarViewModel {
     var isCollapsed by mutableStateOf(false)
         private set
 
-    var collapseProgress by mutableStateOf(0f)
-        private set
+    private val _collapseAnimatable = Animatable(0f)
+    val collapseProgress: Float get() = _collapseAnimatable.value
 
     val currentYear: Int get() = selectedDate.year
     @Suppress("DEPRECATION")
@@ -40,13 +43,31 @@ class CalendarViewModel {
     }
 
     fun collapse() {
-        isCollapsed = true
-        collapseProgress = 1f
+        if (isCollapsed) return
+        coroutineScope.launch {
+            _collapseAnimatable.animateTo(
+                targetValue = 1f,
+                animationSpec = androidx.compose.animation.core.spring(
+                    dampingRatio = 0.8f,
+                    stiffness = 400f
+                )
+            )
+            isCollapsed = true
+        }
     }
 
     fun expand() {
+        if (!isCollapsed) return
         isCollapsed = false
-        collapseProgress = 0f
+        coroutineScope.launch {
+            _collapseAnimatable.animateTo(
+                targetValue = 0f,
+                animationSpec = androidx.compose.animation.core.spring(
+                    dampingRatio = 0.8f,
+                    stiffness = 400f
+                )
+            )
+        }
     }
 
     fun getIsoWeekNumber(date: LocalDate): Int {
