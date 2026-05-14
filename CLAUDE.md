@@ -33,27 +33,33 @@ iOS entry point is `MainViewController.kt` in `shared/src/iosMain/`, consumed by
 
 **Shared source sets:**
 - `commonMain` — all Compose UI and ViewModel code
+- `commonTest` — shared tests (run via `:shared:allTests` or `:shared:androidHostTest`)
 - `androidMain` — Android-specific platform impl + preview tooling
 - `iosMain` — `ComposeUIViewController` factory
 
 **Calendar UI composition** (all in `plus.rua.project.ui`):
 ```
-CalendarMonthView          ← top-level screen (MonthHeader + WeekdayHeader + CalendarPager)
+CalendarMonthView          ← top-level screen (MonthHeader + WeekdayHeader + pager + BottomCard)
   ├── MonthHeader          ← year/month label + ISO week number
   ├── WeekdayHeader        ← fixed "一二三四五六日" row
-  └── CalendarPager        ← HorizontalPager with Int.MAX_VALUE pages
-        └── CalendarMonthPage  ← 6×7 grid of DayCell composables
-              └── DayCell      ← single day circle with selection/today states
+  ├── CalendarPager        ← HorizontalPager with Int.MAX_VALUE pages (month view)
+  │     └── CalendarMonthPage  ← 6×7 grid of DayCell with collapse animation
+  │           └── DayCell      ← single day circle with selection/today states
+  ├── WeekPager            ← HorizontalPager for single-week view (collapsed state)
+  │     └── DayCell
+  └── BottomCard           ← drag handle card, drives collapse/expand gestures
 ```
 
-`CalendarViewModel` holds `selectedDate` state and computes month day grids + ISO week numbers. Week starts on Monday (ISO 8601).
+**Collapse/expand animation:** `CalendarMonthView` supports month↔week transition via `CalendarViewModel.collapseProgress` (0f=month, 1f=week). `BottomCard` captures vertical drag gestures and calls `viewModel.onDrag()`/`onExpandDrag()`. When progress crosses 50% on release, a spring animation snaps to the nearest state. `CalendarMonthPage` compresses non-selected weeks toward zero height during collapse. When fully collapsed, `WeekPager` replaces `CalendarPager` for efficient single-week paging.
 
-**Pager page mapping:** `CalendarPager` uses `Int.MAX_VALUE` pages centered at `Int.MAX_VALUE / 2`. Page-to-yearMonth conversion is done arithmetically via `pageToYearMonth()` / `yearMonthToPage()` — no index-based list.
+**Pager page mapping:** Both `CalendarPager` and `WeekPager` use `Int.MAX_VALUE` pages centered at `Int.MAX_VALUE / 2`. Page-to-date conversion is arithmetic — no index-based list. `CalendarPager` maps pages to yearMonth; `WeekPager` maps pages to week-Monday dates. Both skip the initial `snapshotFlow` emission (`.drop(1)`) to preserve the "today" selection on first render.
+
+`CalendarViewModel` holds `selectedDate` and `isCollapsed` state, computes month day grids (6×7=42 cells) and ISO week numbers. Week starts on Monday (ISO 8601).
 
 ## Key Dependencies
 
 - Kotlin 2.3.21, Compose Multiplatform 1.10.3, Material 3 1.10.0-alpha05
-- `kotlinx-datetime` for all date logic (no java.util.Calendar)
+- `kotlinx-datetime` 0.8.0 for all date logic (no java.util.Calendar)
 - AGP 9.2.1, compileSdk/targetSdk 36, minSdk 24
 - JVM target: 17
 
@@ -61,5 +67,8 @@ CalendarMonthView          ← top-level screen (MonthHeader + WeekdayHeader + C
 
 - Package: `plus.rua.project` (shared), `plus.rua.project.ui` (UI composables)
 - Version catalog at `gradle/libs.versions.toml` — all dependency versions declared there
-- `@Suppress("DEPRECATION")` used for `monthNumber` access on `kotlinx.datetime.LocalDate`
+- `@Suppress("DEPRECATION")` used for `monthNumber` access on `kotlinx.datetime.LocalDate` — must include inline comment explaining reason
 - UI text is in Chinese (weekday labels, month header format "2026年5月")
+- Public `@Composable` functions require KDoc per `COMMENTS.md`
+- `Modifier` parameter always last in composable signatures
+- Callback parameters use `on` prefix (`onDateClick`, `onMonthChanged`)
