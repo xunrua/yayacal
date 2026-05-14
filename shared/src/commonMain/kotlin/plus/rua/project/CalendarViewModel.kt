@@ -1,6 +1,7 @@
 package plus.rua.project
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -42,31 +43,27 @@ class CalendarViewModel(private val coroutineScope: CoroutineScope) {
         selectedDate = date
     }
 
-    fun collapse() {
-        if (isCollapsed) return
+    fun onDrag(delta: Float) {
         coroutineScope.launch {
-            _collapseAnimatable.animateTo(
-                targetValue = 1f,
-                animationSpec = androidx.compose.animation.core.spring(
-                    dampingRatio = 0.8f,
-                    stiffness = 400f
-                )
-            )
-            isCollapsed = true
+            val new = (_collapseAnimatable.value + delta).coerceIn(0f, 1f)
+            _collapseAnimatable.snapTo(new)
         }
     }
 
-    fun expand() {
-        if (!isCollapsed) return
-        isCollapsed = false
+    fun onDragEnd() {
         coroutineScope.launch {
-            _collapseAnimatable.animateTo(
-                targetValue = 0f,
-                animationSpec = androidx.compose.animation.core.spring(
-                    dampingRatio = 0.8f,
-                    stiffness = 400f
+            if (_collapseAnimatable.value > 0.5f) {
+                _collapseAnimatable.animateTo(
+                    targetValue = 1f,
+                    animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)
                 )
-            )
+                isCollapsed = true
+            } else {
+                _collapseAnimatable.animateTo(
+                    targetValue = 0f,
+                    animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)
+                )
+            }
         }
     }
 
