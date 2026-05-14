@@ -39,7 +39,8 @@ fun CalendarMonthView(
     var calendarHeightPx by remember { mutableIntStateOf(0) }
     var screenHeightPx by remember { mutableIntStateOf(0) }
     val collapseOffsetPx = -(viewModel.collapseProgress * calendarHeightPx * 5f / 6f).toInt()
-    val cardHeightPx = screenHeightPx - calendarHeightPx + collapseOffsetPx
+    val cardTopPx = calendarHeightPx + collapseOffsetPx
+    val cardHeightPx = screenHeightPx - cardTopPx
 
     Box(
         modifier = modifier
@@ -88,7 +89,6 @@ fun CalendarMonthView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(with(density) { cardHeightPx.toDp() })
-                    .offset(y = with(density) { collapseOffsetPx.toDp() })
                     .align(Alignment.BottomCenter)
             )
         }
