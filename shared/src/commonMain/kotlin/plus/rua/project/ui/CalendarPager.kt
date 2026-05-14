@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
@@ -41,9 +42,9 @@ fun CalendarPager(
     )
     val coroutineScope = rememberCoroutineScope()
 
-    // Sync settled page to onMonthChanged
+    // Sync settled page to onMonthChanged (skip initial emission to preserve "today" selection)
     LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage }.collect { page ->
+        snapshotFlow { pagerState.settledPage }.drop(1).collect { page ->
             val yearMonth = pageToYearMonth(page, initialYearMonth)
             onMonthChanged(yearMonth.first, yearMonth.second)
         }
