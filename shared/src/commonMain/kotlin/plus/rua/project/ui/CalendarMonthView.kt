@@ -64,7 +64,9 @@ fun CalendarMonthView(
         expandedGridHeightPx
     } else 0
 
-    val cardTopPx = headerHeightPx + gridHeightPx
+    val rowPaddingPx = with(density) { 2.dp.toPx() }.toInt()
+
+    val cardTopPx = headerHeightPx + gridHeightPx + rowPaddingPx
     val cardHeightPx = screenHeightPx - cardTopPx
 
     val pagerModifier = if (p > 0.01f && expandedGridHeightPx > 0) {
@@ -104,7 +106,7 @@ fun CalendarMonthView(
             WeekdayHeader(
                 modifier = Modifier.fillMaxWidth().onSizeChanged { size ->
                     weekdayHeaderHeightPx = size.height
-                }
+                }.padding(bottom = 2.dp)
             )
             // 完全折叠且无动画时显示 WeekPager，否则显示 CalendarPager（含下拉恢复过程）
             if (viewModel.isCollapsed && viewModel.collapseProgress >= 1f) {
