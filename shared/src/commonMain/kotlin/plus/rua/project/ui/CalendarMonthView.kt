@@ -31,7 +31,6 @@ import kotlin.time.Clock
 import plus.rua.project.CalendarViewModel
 
 private const val START_PAGE = Int.MAX_VALUE / 2
-private const val TAG = "CalMonthView"
 
 /**
  * 日历主界面，包含月/周视图切换和折叠动画。
@@ -99,10 +98,6 @@ fun CalendarMonthView(
     val cardTopPx = headerHeightPx + gridHeightPx + rowPaddingPx
     val cardHeightPx = screenHeightPx - cardTopPx
 
-    if (p > 0.01f) {
-        println("[$TAG] height: p=$p, rowH=$rowHeightPx, weeks=$interpolatedWeeks, gridH=$gridHeightPx, headerH=$headerHeightPx, cardTop=$cardTopPx, cardH=$cardHeightPx, isCollapsed=${viewModel.isCollapsed}")
-    }
-
     val pagerModifier = if (p > 0.01f && rowHeightPx > 0) {
         Modifier
             .height(with(density) { gridHeightPx.toDp() })
@@ -142,7 +137,6 @@ fun CalendarMonthView(
             )
             // 完全折叠且无动画时显示 WeekPager，否则显示 CalendarPager（含下拉恢复过程）
             if (viewModel.isCollapsed && viewModel.collapseProgress >= 1f) {
-                println("[$TAG] showing WeekPager: isCollapsed=${viewModel.isCollapsed}, p=${viewModel.collapseProgress}")
                 WeekPager(
                     selectedDate = viewModel.selectedDate,
                     today = today,
