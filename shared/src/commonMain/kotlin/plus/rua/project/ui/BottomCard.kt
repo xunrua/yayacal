@@ -38,13 +38,24 @@ fun BottomCard(
         modifier = modifier
             .fillMaxWidth()
             .pointerInput(viewModel.isCollapsed) {
-                if (viewModel.isCollapsed) return@pointerInput
-                detectVerticalDragGestures(
-                    onDragEnd = { viewModel.onDragEnd() },
-                    onDragCancel = { viewModel.onDragEnd() }
-                ) { _, dragAmount ->
-                    val delta = -dragAmount / dragRange
-                    viewModel.onDrag(delta)
+                if (viewModel.isCollapsed) {
+                    // 折叠状态：下拉恢复到月视图
+                    detectVerticalDragGestures(
+                        onDragEnd = { viewModel.onExpandDragEnd() },
+                        onDragCancel = { viewModel.onExpandDragEnd() }
+                    ) { _, dragAmount ->
+                        val delta = -dragAmount / dragRange
+                        viewModel.onExpandDrag(delta)
+                    }
+                } else {
+                    // 展开状态：上拉折叠到周视图
+                    detectVerticalDragGestures(
+                        onDragEnd = { viewModel.onDragEnd() },
+                        onDragCancel = { viewModel.onDragEnd() }
+                    ) { _, dragAmount ->
+                        val delta = -dragAmount / dragRange
+                        viewModel.onDrag(delta)
+                    }
                 }
             },
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),

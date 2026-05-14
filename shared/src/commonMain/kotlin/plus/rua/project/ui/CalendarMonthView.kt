@@ -106,7 +106,8 @@ fun CalendarMonthView(
                     weekdayHeaderHeightPx = size.height
                 }
             )
-            if (viewModel.isCollapsed) {
+            // 完全折叠且无动画时显示 WeekPager，否则显示 CalendarPager（含下拉恢复过程）
+            if (viewModel.isCollapsed && viewModel.collapseProgress >= 1f) {
                 WeekPager(
                     selectedDate = viewModel.selectedDate,
                     today = today,

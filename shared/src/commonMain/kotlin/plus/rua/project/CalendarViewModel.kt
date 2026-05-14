@@ -74,6 +74,32 @@ class CalendarViewModel(private val coroutineScope: CoroutineScope) {
         }
     }
 
+    // 折叠状态下下拉恢复：delta 为负值（向下拖）推动 progress 向 0
+    fun onExpandDrag(delta: Float) {
+        coroutineScope.launch {
+            val new = (_collapseAnimatable.value + delta).coerceIn(0f, 1f)
+            _collapseAnimatable.snapTo(new)
+        }
+    }
+
+    // 下拉超过 50% 时自动展开到月视图，否则回弹到周视图
+    fun onExpandDragEnd() {
+        coroutineScope.launch {
+            if (_collapseAnimatable.value < 0.5f) {
+                _collapseAnimatable.animateTo(
+                    targetValue = 0f,
+                    animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)
+                )
+                isCollapsed = false
+            } else {
+                _collapseAnimatable.animateTo(
+                    targetValue = 1f,
+                    animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)
+                )
+            }
+        }
+    }
+
     /**
      * 计算给定日期的 ISO 8601 周号。
      *
