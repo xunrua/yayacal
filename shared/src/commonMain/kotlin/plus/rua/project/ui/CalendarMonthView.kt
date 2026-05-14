@@ -1,8 +1,11 @@
 package plus.rua.project.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
@@ -11,7 +14,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -28,9 +34,24 @@ fun CalendarMonthView(
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
     var currentYear by remember { mutableIntStateOf(viewModel.currentYear) }
     var currentMonth by remember { mutableIntStateOf(viewModel.currentMonth) }
+    val density = LocalDensity.current
 
-    Column(modifier = modifier.fillMaxSize().statusBarsPadding()) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+    var calendarHeightPx by remember { mutableIntStateOf(0) }
+    var screenHeightPx by remember { mutableIntStateOf(0) }
+    val collapseOffsetPx = -(viewModel.collapseProgress * calendarHeightPx * 5f / 6f).toInt()
+    val cardHeightPx = screenHeightPx - calendarHeightPx + collapseOffsetPx
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .onSizeChanged { size ->
+                screenHeightPx = size.height
+            }
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp).onSizeChanged { size ->
+            calendarHeightPx = size.height
+        }) {
             MonthHeader(
                 year = currentYear,
                 month = currentMonth,
@@ -61,9 +82,15 @@ fun CalendarMonthView(
                 )
             }
         }
-        BottomCard(
-            viewModel = viewModel,
-            modifier = Modifier.weight(1f)
-        )
+        if (cardHeightPx > 0) {
+            BottomCard(
+                viewModel = viewModel,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(with(density) { cardHeightPx.toDp() })
+                    .offset(y = with(density) { collapseOffsetPx.toDp() })
+                    .align(Alignment.BottomCenter)
+            )
+        }
     }
 }
