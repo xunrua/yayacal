@@ -27,6 +27,7 @@ private const val START_PAGE = Int.MAX_VALUE / 2
  * @param onDateClick 日期点击回调
  * @param onMonthChanged 月份切换回调，滑动到新月份时触发
  * @param collapseProgress 折叠进度，0f=展开，1f=折叠
+ * @param rowHeightPx 从外层传入的锁定行高（像素），折叠过程中不变
  * @param modifier 外部布局修饰符
  */
 @Composable
@@ -36,8 +37,8 @@ fun CalendarPager(
     onDateClick: (LocalDate) -> Unit,
     onMonthChanged: (year: Int, month: Int) -> Unit,
     collapseProgress: Float,
+    rowHeightPx: Int,
     onWeeksChanged: ((Int) -> Unit)? = null,
-    onRowHeightMeasured: ((Int) -> Unit)? = null,
     pagerState: PagerState,
     modifier: Modifier = Modifier
 ) {
@@ -79,7 +80,7 @@ fun CalendarPager(
                 }
             },
             collapseProgress = collapseProgress,
-            onRowHeightMeasured = if (page == pagerState.currentPage) onRowHeightMeasured else null
+            rowHeightPx = rowHeightPx
         )
     }
 }

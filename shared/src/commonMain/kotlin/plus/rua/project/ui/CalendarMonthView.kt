@@ -169,6 +169,7 @@ fun CalendarMonthView(
                         currentMonth = month
                     },
                     collapseProgress = viewModel.collapseProgress,
+                    rowHeightPx = rowHeightPx,
                     onWeeksChanged = { weeks ->
                         currentWeeksCount = weeks
                         if (p < 0.01f) expandedWeeksCount = weeks
