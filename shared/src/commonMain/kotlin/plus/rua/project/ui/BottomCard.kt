@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import plus.rua.project.CalendarViewModel
 
@@ -24,16 +23,16 @@ import plus.rua.project.CalendarViewModel
  * 底部卡片，折叠状态下支持垂直拖拽触发折叠动画。
  *
  * @param viewModel 日历 ViewModel，用于读取折叠状态和驱动拖拽
+ * @param dragRangePx 拖拽手势映射范围（像素），progress 从 0→1 对应手指移动此距离。
+ *   应设为折叠时日历实际高度变化量 (weeks-1)×rowHeight，使拖拽跟手。
  * @param modifier 外部布局修饰符
  */
 @Composable
 fun BottomCard(
     viewModel: CalendarViewModel,
+    dragRangePx: Float,
     modifier: Modifier = Modifier
 ) {
-    val density = LocalDensity.current
-    val dragRange = with(density) { DRAG_RANGE_DP.dp.toPx() }
-
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -48,7 +47,7 @@ fun BottomCard(
                             viewModel.onExpandDragEnd()
                         }
                     ) { _, dragAmount ->
-                        val delta = -dragAmount / dragRange
+                        val delta = -dragAmount / dragRangePx
                         viewModel.onExpandDrag(delta)
                     }
                 } else {
@@ -61,7 +60,7 @@ fun BottomCard(
                             viewModel.onDragEnd()
                         }
                     ) { _, dragAmount ->
-                        val delta = -dragAmount / dragRange
+                        val delta = -dragAmount / dragRangePx
                         viewModel.onDrag(delta)
                     }
                 }

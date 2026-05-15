@@ -21,8 +21,8 @@ const val ROW_PADDING_DP = 6
 /** 日历网格水平 padding (dp) */
 const val HORIZONTAL_PADDING_DP = 16
 
-/** BottomCard 拖拽手势范围 (dp) */
-const val DRAG_RANGE_DP = 200
+/** BottomCard 拖拽手势范围最小值 (dp)，防止行数少时 dragRange 过小 */
+const val DRAG_RANGE_MIN_DP = 100
 
 /** 日历与 BottomCard 之间的间距 (dp)：展开时 */
 const val CARD_GAP_EXPANDED_DP = 24

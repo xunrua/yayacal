@@ -180,9 +180,18 @@ fun CalendarMonthView(
             }
         }
 
-        if (cardHeightPx > 0) {
+        // 拖拽范围 = 折叠时日历实际高度变化量 (weeks-1)×rowHeight，使手指移动与视觉变化 1:1 对应
+    val dragRangeMinPx = with(density) { DRAG_RANGE_MIN_DP.dp.toPx() }
+    val dragRangePx = if (effectiveRowHeightPx > 0) {
+        maxOf((effectiveWeeks - 1) * effectiveRowHeightPx.toFloat(), dragRangeMinPx)
+    } else {
+        dragRangeMinPx
+    }
+
+    if (cardHeightPx > 0) {
             BottomCard(
                 viewModel = viewModel,
+                dragRangePx = dragRangePx,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(with(density) { cardHeightPx.toDp() })
