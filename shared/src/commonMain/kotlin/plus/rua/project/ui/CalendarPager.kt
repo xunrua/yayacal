@@ -11,13 +11,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
-import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.minus
 import kotlinx.datetime.number
-
-/** 无限分页中心页，用于 HorizontalPager 的起始位置 */
-private const val START_PAGE = Int.MAX_VALUE / 2
 
 /**
  * 月度日历分页器，HorizontalPager 实现无限左右滑动切换月份。
@@ -43,13 +38,14 @@ fun CalendarPager(
     pagerState: PagerState,
     modifier: Modifier = Modifier
 ) {
-    val initialYearMonth = remember { today.toYearMonth() }
+    val initialYear = remember { today.year }
+    val initialMonth = remember { today.month.number }
     val coroutineScope = rememberCoroutineScope()
 
     // Sync settled page to onMonthChanged (skip initial emission to preserve "today" selection)
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }.drop(1).collect { page ->
-            val yearMonth = pageToYearMonth(page, initialYearMonth)
+            val yearMonth = pageToYearMonth(page, initialYear, initialMonth)
             onMonthChanged(yearMonth.first, yearMonth.second)
         }
     }
@@ -60,7 +56,7 @@ fun CalendarPager(
         flingBehavior = PagerDefaults.flingBehavior(state = pagerState),
         modifier = modifier
     ) { page ->
-        val (year, month) = pageToYearMonth(page, initialYearMonth)
+        val (year, month) = pageToYearMonth(page, initialYear, initialMonth)
         CalendarMonthPage(
             year = year,
             month = month,
@@ -69,9 +65,10 @@ fun CalendarPager(
             onDateClick = { date ->
                 onDateClick(date)
                 // If clicking a date in a different month, scroll to that page
-                val clickedYearMonth = date.toYearMonth()
-                if (clickedYearMonth != pageToYearMonth(page, initialYearMonth)) {
-                    val targetPage = yearMonthToPage(clickedYearMonth, initialYearMonth)
+                val clickedYear = date.year
+                val clickedMonth = date.month.number
+                if (clickedYear != year || clickedMonth != month) {
+                    val targetPage = yearMonthToPage(clickedYear, clickedMonth, initialYear, initialMonth)
                     if (targetPage != pagerState.currentPage) {
                         coroutineScope.launch {
                             pagerState.animateScrollToPage(targetPage)
@@ -85,29 +82,4 @@ fun CalendarPager(
             onRowHeightMeasured = onRowHeightMeasured
         )
     }
-}
-
-private fun LocalDate.toYearMonth(): Pair<Int, Int> = Pair(year, month.number)
-
-// 页码→年月：偏移量 + 初始月份的绝对月数，再拆分回年月
-private fun pageToYearMonth(page: Int, initial: Pair<Int, Int>): Pair<Int, Int> {
-    val offset = page - START_PAGE
-    val totalMonths = initial.first * 12 + (initial.second - 1) + offset
-    return Pair(totalMonths / 12, totalMonths % 12 + 1)
-}
-
-// 年月→页码：目标与初始的绝对月数差 + 起始页
-private fun yearMonthToPage(yearMonth: Pair<Int, Int>, initial: Pair<Int, Int>): Int {
-    val targetTotal = yearMonth.first * 12 + (yearMonth.second - 1)
-    val initialTotal = initial.first * 12 + (initial.second - 1)
-    return START_PAGE + (targetTotal - initialTotal)
-}
-
-// 计算月份在日历网格中需要的行数（4/5/6）
-internal fun calculateWeeksCount(year: Int, month: Int): Int {
-    val firstOfMonth = LocalDate(year, month, 1)
-    val offset = firstOfMonth.dayOfWeek.ordinal
-    val nextMonth = if (month == 12) LocalDate(year + 1, 1, 1) else LocalDate(year, month + 1, 1)
-    val daysInMonth = nextMonth.minus(DatePeriod(days = 1)).day
-    return ((offset + daysInMonth - 1) / 7) + 1
 }

@@ -9,19 +9,13 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.minus
 import kotlinx.datetime.plus
-
-/** 无限分页中心页，用于 HorizontalPager 的起始位置 */
-private const val START_PAGE = Int.MAX_VALUE / 2
 
 /**
  * 周视图分页器，折叠状态下显示选中日期所在周，支持左右滑动切换周。
@@ -78,14 +72,4 @@ fun WeekPager(
             }
         }
     }
-}
-
-private fun LocalDate.toWeekMonday(): LocalDate {
-    val dayOfWeekOrdinal = dayOfWeek.ordinal // Monday=0 ... Sunday=6
-    return minus(DatePeriod(days = dayOfWeekOrdinal))
-}
-
-private fun pageToWeekMonday(page: Int, initial: LocalDate): LocalDate {
-    val offset = page - START_PAGE
-    return initial.plus(DatePeriod(days = offset * 7))
 }

@@ -31,10 +31,6 @@ import kotlin.math.abs
 import kotlin.time.Clock
 import plus.rua.project.CalendarViewModel
 
-private const val START_PAGE = Int.MAX_VALUE / 2
-private const val ROW_PADDING_DP = 4
-private const val HORIZONTAL_PADDING_DP = 16
-
 /**
  * 日历主界面，包含月/周视图切换和折叠动画。
  *
@@ -50,8 +46,8 @@ fun CalendarMonthView(
     val coroutineScope = rememberCoroutineScope()
     val viewModel = remember { CalendarViewModel(coroutineScope) }
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
-    var currentYear by remember { mutableIntStateOf(viewModel.currentYear) }
-    var currentMonth by remember { mutableIntStateOf(viewModel.currentMonth) }
+    val currentYear by remember { derivedStateOf { viewModel.selectedDate.year } }
+    val currentMonth by remember { derivedStateOf { viewModel.selectedDate.month.number } }
     val density = LocalDensity.current
 
     var monthHeaderHeightPx by remember { mutableIntStateOf(0) }
@@ -66,24 +62,19 @@ fun CalendarMonthView(
     val headerHeightPx = monthHeaderHeightPx + weekdayHeaderHeightPx
     val rowPaddingPx = with(density) { ROW_PADDING_DP.dp.toPx() }.toInt()
 
-    // 滑动偏移插值行数
-    // 以 currentPage 为基准页，offsetFraction 表示基准页与可视区域左边缘的偏移：
-    //   offsetFraction > 0：基准页偏右，可视区域露出下一页（page+1）
-    //   offsetFraction < 0：基准页偏左，可视区域露出上一页（page-1）
-    // 过渡进度 = abs(offsetFraction)，目标页 = page ± 1。
-    // 当 currentPage 跳变（如从 Jul 跳到 Aug），基准页行数也随之跳变，
-    // 但 abs(offsetFraction) 同时从 ~0.5 降到 ~0.5（连续），所以插值结果连续：
-    //   跳变前: cp=Jul(5行), off=+0.49 → base=5, target=Aug(6), lerp(5,6,0.49)=5.49
-    //   跳变后: cp=Aug(6行), off=-0.47 → base=6, target=Jul(5), lerp(6,5,0.47)=5.47 ← 连续！
-    val offsetFraction by remember { derivedStateOf { pagerState.currentPageOffsetFraction } }
-    val interpolatedWeeks = if (abs(offsetFraction) > 0.01f) {
-        val cp = pagerState.currentPage
-        val baseWeeks = calculateWeeksCountForPage(cp, today)
-        val targetPage = cp + if (offsetFraction > 0) 1 else -1
-        val targetWeeks = calculateWeeksCountForPage(targetPage, today)
-        lerp(baseWeeks.toFloat(), targetWeeks.toFloat(), abs(offsetFraction))
-    } else {
-        calculateWeeksCountForPage(pagerState.currentPage, today).toFloat()
+    val interpolatedWeeks by remember {
+        derivedStateOf {
+            val fraction = pagerState.currentPageOffsetFraction
+            if (abs(fraction) > OFFSET_FRACTION_THRESHOLD) {
+                val cp = pagerState.currentPage
+                val baseWeeks = calculateWeeksCountForPage(cp, today)
+                val targetPage = cp + if (fraction > 0) 1 else -1
+                val targetWeeks = calculateWeeksCountForPage(targetPage, today)
+                lerp(baseWeeks.toFloat(), targetWeeks.toFloat(), abs(fraction))
+            } else {
+                calculateWeeksCountForPage(pagerState.currentPage, today).toFloat()
+            }
+        }
     }
 
     // 预估行高：DayCell aspectRatio=1，宽度 = (screenWidth - horizontalPadding) / 7
@@ -100,14 +91,18 @@ fun CalendarMonthView(
     // gridH = rowH × (1 + (weeks-1) × (1-p))
     val effectiveWeeks = interpolatedWeeks
 
-    val gridHeightPx = if (effectiveRowHeightPx > 0) {
-        val rowH = effectiveRowHeightPx.toFloat()
-        if (p > 0.01f) {
-            (rowH * (1 + (effectiveWeeks - 1) * (1f - p))).toInt()
-        } else {
-            (rowH * effectiveWeeks).toInt()
+    val gridHeightPx by remember {
+        derivedStateOf {
+            if (effectiveRowHeightPx > 0) {
+                val rowH = effectiveRowHeightPx.toFloat()
+                if (p > OFFSET_FRACTION_THRESHOLD) {
+                    (rowH * (1 + (effectiveWeeks - 1) * (1f - p))).toInt()
+                } else {
+                    (rowH * effectiveWeeks).toInt()
+                }
+            } else 0
         }
-    } else 0
+    }
 
     val calendarAreaHeightPx = headerHeightPx + gridHeightPx + rowPaddingPx
     val cardHeightPx = if (screenHeightPx > 0 && calendarAreaHeightPx > 0) screenHeightPx - calendarAreaHeightPx else 0
@@ -154,8 +149,6 @@ fun CalendarMonthView(
                         val weekSunday = weekMonday.plus(DatePeriod(days = 6))
                         val date = if (today in weekMonday..weekSunday) today else weekMonday
                         viewModel.selectDate(date)
-                        currentYear = date.year
-                        currentMonth = date.month.number
                     }
                 )
             } else {
@@ -167,14 +160,12 @@ fun CalendarMonthView(
                         val date = if (year == today.year && today.month.number == month) today
                                    else LocalDate(year, month, 1)
                         viewModel.selectDate(date)
-                        currentYear = year
-                        currentMonth = month
                     },
                     collapseProgress = viewModel.collapseProgress,
                     rowHeightPx = rowHeightPx,
                     effectiveWeeks = effectiveWeeks,
                     onRowHeightMeasured = { h ->
-                        if (h > 0 && rowHeightPx == 0) rowHeightPx = h
+                        if (h > 0) rowHeightPx = h
                     },
                     pagerState = pagerState,
                     modifier = pagerModifier
@@ -192,16 +183,4 @@ fun CalendarMonthView(
             )
         }
     }
-}
-
-private fun lerp(start: Float, end: Float, fraction: Float): Float = start + (end - start) * fraction
-
-private fun calculateWeeksCountForPage(page: Int, today: LocalDate): Int {
-    val initialYear = today.year
-    val initialMonth = today.month.number
-    val offset = page - START_PAGE
-    val totalMonths = initialYear * 12 + (initialMonth - 1) + offset
-    val year = totalMonths / 12
-    val month = totalMonths % 12 + 1
-    return calculateWeeksCount(year, month)
 }

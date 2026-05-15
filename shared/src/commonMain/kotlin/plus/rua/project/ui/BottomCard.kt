@@ -32,7 +32,7 @@ fun BottomCard(
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
-    val dragRange = with(density) { 200.dp.toPx() }
+    val dragRange = with(density) { DRAG_RANGE_DP.dp.toPx() }
 
     Surface(
         modifier = modifier
