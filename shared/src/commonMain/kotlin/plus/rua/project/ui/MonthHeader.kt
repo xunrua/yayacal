@@ -1,5 +1,12 @@
 package plus.rua.project.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,14 +40,40 @@ fun MonthHeader(
             .padding(vertical = 14.dp, horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "${year}年${month}月",
-            style = MaterialTheme.typography.titleLarge
-        )
+        AnimatedContent(
+            targetState = Pair(year, month),
+            transitionSpec = {
+                if (targetState.second > initialState.second) {
+                    slideInVertically(tween(250)) { -it } + fadeIn(tween(250)) togetherWith
+                        slideOutVertically(tween(250)) { it } + fadeOut(tween(250))
+                } else {
+                    slideInVertically(tween(250)) { it } + fadeIn(tween(250)) togetherWith
+                        slideOutVertically(tween(250)) { -it } + fadeOut(tween(250))
+                }
+            }
+        ) { (y, m) ->
+            Text(
+                text = "${y}年${m}月",
+                style = MaterialTheme.typography.titleLarge
+            )
+        }
         Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = "第${weekNumber}周",
-            style = MaterialTheme.typography.bodySmall
-        )
+        AnimatedContent(
+            targetState = weekNumber,
+            transitionSpec = {
+                if (targetState > initialState) {
+                    slideInVertically(tween(250)) { -it } + fadeIn(tween(250)) togetherWith
+                        slideOutVertically(tween(250)) { it } + fadeOut(tween(250))
+                } else {
+                    slideInVertically(tween(250)) { it } + fadeIn(tween(250)) togetherWith
+                        slideOutVertically(tween(250)) { -it } + fadeOut(tween(250))
+                }
+            }
+        ) { week ->
+            Text(
+                text = "第${week}周",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
     }
 }
