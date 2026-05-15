@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import kotlin.math.abs
@@ -56,8 +57,6 @@ fun CalendarMonthView(
     var monthHeaderHeightPx by remember { mutableIntStateOf(0) }
     var weekdayHeaderHeightPx by remember { mutableIntStateOf(0) }
     var rowHeightPx by remember { mutableIntStateOf(0) }
-    @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
-    var currentWeeksCount by remember { mutableIntStateOf(calculateWeeksCount(today.year, today.monthNumber)) }
     var screenWidthPx by remember { mutableIntStateOf(0) }
     var screenHeightPx by remember { mutableIntStateOf(0) }
 
@@ -153,11 +152,10 @@ fun CalendarMonthView(
                     onDateClick = { date -> viewModel.selectDate(date) },
                     onWeekChanged = { weekMonday ->
                         val weekSunday = weekMonday.plus(DatePeriod(days = 6))
-                        val date = if (today >= weekMonday && today <= weekSunday) today else weekMonday
+                        val date = if (today in weekMonday..weekSunday) today else weekMonday
                         viewModel.selectDate(date)
                         currentYear = date.year
-                        @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
-                        currentMonth = date.monthNumber
+                        currentMonth = date.month.number
                     }
                 )
             } else {
@@ -166,7 +164,7 @@ fun CalendarMonthView(
                     today = today,
                     onDateClick = { date -> viewModel.selectDate(date) },
                     onMonthChanged = { year, month ->
-                        val date = if (year == today.year && today.monthNumber == month) today
+                        val date = if (year == today.year && today.month.number == month) today
                                    else LocalDate(year, month, 1)
                         viewModel.selectDate(date)
                         currentYear = year
@@ -175,9 +173,6 @@ fun CalendarMonthView(
                     collapseProgress = viewModel.collapseProgress,
                     rowHeightPx = rowHeightPx,
                     effectiveWeeks = effectiveWeeks,
-                    onWeeksChanged = { weeks ->
-                        currentWeeksCount = weeks
-                    },
                     onRowHeightMeasured = { h ->
                         if (h > 0 && rowHeightPx == 0) rowHeightPx = h
                     },
@@ -201,10 +196,9 @@ fun CalendarMonthView(
 
 private fun lerp(start: Float, end: Float, fraction: Float): Float = start + (end - start) * fraction
 
-@Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
 private fun calculateWeeksCountForPage(page: Int, today: LocalDate): Int {
     val initialYear = today.year
-    val initialMonth = today.monthNumber
+    val initialMonth = today.month.number
     val offset = page - START_PAGE
     val totalMonths = initialYear * 12 + (initialMonth - 1) + offset
     val year = totalMonths / 12

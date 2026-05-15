@@ -17,6 +17,7 @@ import androidx.compose.ui.zIndex
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
+import kotlinx.datetime.number
 import kotlinx.datetime.plus
 
 /**
@@ -141,7 +142,6 @@ private data class DayData(
     val isCurrentMonth: Boolean
 )
 
-@Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
 private fun generateMonthDays(year: Int, month: Int): List<DayData> {
     val firstOfMonth = LocalDate(year, month, 1)
     val offset = firstOfMonth.dayOfWeek.ordinal
@@ -155,7 +155,7 @@ private fun generateMonthDays(year: Int, month: Int): List<DayData> {
         val date = startDate.plus(DatePeriod(days = i))
         DayData(
             date = date,
-            isCurrentMonth = date.monthNumber == month && date.year == year
+            isCurrentMonth = date.month.number == month && date.year == year
         )
     }
 }

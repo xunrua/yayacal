@@ -12,6 +12,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.minus
+import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import kotlin.time.Clock
@@ -42,8 +43,7 @@ class CalendarViewModel(private val coroutineScope: CoroutineScope) {
     val collapseProgress: Float get() = _collapseAnimatable.value
 
     val currentYear: Int get() = selectedDate.year
-    @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
-    val currentMonth: Int get() = selectedDate.monthNumber
+    val currentMonth: Int get() = selectedDate.month.number
 
     fun selectDate(date: LocalDate) {
         selectedDate = date
@@ -132,7 +132,6 @@ class CalendarViewModel(private val coroutineScope: CoroutineScope) {
         return diff / 7 + 1
     }
 
-    @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     fun getMonthDays(year: Int, month: Int): List<CalendarDay> {
         val firstOfMonth = LocalDate(year, month, 1)
         val dayOfWeekOffset = firstOfMonth.dayOfWeek.ordinal
@@ -146,7 +145,7 @@ class CalendarViewModel(private val coroutineScope: CoroutineScope) {
             val date = startDate.plus(DatePeriod(days = i))
             CalendarDay(
                 date = date,
-                isCurrentMonth = date.monthNumber == month && date.year == year,
+                isCurrentMonth = date.month.number == month && date.year == year,
                 isToday = date == today,
                 isSelected = date == selectedDate
             )

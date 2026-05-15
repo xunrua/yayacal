@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
+import kotlinx.datetime.number
 
 /** 无限分页中心页，用于 HorizontalPager 的起始位置 */
 private const val START_PAGE = Int.MAX_VALUE / 2
@@ -39,7 +40,6 @@ fun CalendarPager(
     collapseProgress: Float,
     rowHeightPx: Int,
     effectiveWeeks: Float,
-    onWeeksChanged: ((Int) -> Unit)? = null,
     onRowHeightMeasured: ((Int) -> Unit)? = null,
     pagerState: PagerState,
     modifier: Modifier = Modifier
@@ -51,7 +51,6 @@ fun CalendarPager(
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }.drop(1).collect { page ->
             val yearMonth = pageToYearMonth(page, initialYearMonth)
-            onWeeksChanged?.invoke(calculateWeeksCount(yearMonth.first, yearMonth.second))
             onMonthChanged(yearMonth.first, yearMonth.second)
         }
     }
@@ -89,8 +88,7 @@ fun CalendarPager(
     }
 }
 
-@Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
-private fun LocalDate.toYearMonth(): Pair<Int, Int> = Pair(year, monthNumber)
+private fun LocalDate.toYearMonth(): Pair<Int, Int> = Pair(year, month.number)
 
 // 页码→年月：偏移量 + 初始月份的绝对月数，再拆分回年月
 private fun pageToYearMonth(page: Int, initial: Pair<Int, Int>): Pair<Int, Int> {
