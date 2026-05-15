@@ -2,6 +2,7 @@ package plus.rua.project.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -10,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -110,6 +112,8 @@ fun CalendarMonthPage(
 
             val shouldShow = rowHeightDp == null || rowHeightDp > 0.dp
 
+            val skipDayCells = (isAbove || isBelow) && rowScale < 0.1f && collapseProgress > 0.9f
+
             if (shouldShow) {
                 Row(
                     modifier = Modifier
@@ -130,16 +134,24 @@ fun CalendarMonthPage(
                             } else Modifier
                         )
                         .padding(vertical = ROW_PADDING_DP.dp)
-                ) {
-                    week.forEach { dayData ->
-                        DayCell(
-                            date = dayData.date,
-                            isCurrentMonth = dayData.isCurrentMonth,
-                            isSelected = dayData.date == selectedDate,
-                            isToday = dayData.date == today,
-                            onClick = { onDateClick(dayData.date) },
-                            modifier = Modifier.weight(1f)
+                        .then(
+                            if (isAbove || isBelow) Modifier.graphicsLayer { alpha = 1f - collapseProgress }
+                            else Modifier
                         )
+                ) {
+                    if (skipDayCells) {
+                        Spacer(Modifier.weight(1f))
+                    } else {
+                        week.forEach { dayData ->
+                            DayCell(
+                                date = dayData.date,
+                                isCurrentMonth = dayData.isCurrentMonth,
+                                isSelected = dayData.date == selectedDate,
+                                isToday = dayData.date == today,
+                                onClick = { onDateClick(dayData.date) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
                 }
             }
