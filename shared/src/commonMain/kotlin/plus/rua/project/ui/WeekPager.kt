@@ -11,7 +11,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
+import kotlin.math.abs
 import kotlinx.coroutines.flow.drop
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
@@ -53,9 +55,12 @@ fun WeekPager(
         flingBehavior = PagerDefaults.flingBehavior(state = pagerState),
         modifier = modifier
     ) { page ->
+        val pageOffset = abs(pagerState.currentPageOffsetFraction)
+        val alpha = 1f - pageOffset.coerceIn(0f, 0.3f) / 0.3f
         val weekMonday = pageToWeekMonday(page, initialWeekMonday)
         Row(
             modifier = Modifier
+                .alpha(alpha)
                 .fillMaxWidth()
                 .padding(vertical = ROW_PADDING_DP.dp)
         ) {

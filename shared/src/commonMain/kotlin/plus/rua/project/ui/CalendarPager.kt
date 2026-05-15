@@ -9,10 +9,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.number
+import kotlin.math.abs
 
 /**
  * 月度日历分页器，HorizontalPager 实现无限左右滑动切换月份。
@@ -63,6 +65,8 @@ fun CalendarPager(
         flingBehavior = PagerDefaults.flingBehavior(state = pagerState),
         modifier = modifier
     ) { page ->
+        val pageOffset = abs(pagerState.currentPageOffsetFraction)
+        val alpha = 1f - pageOffset.coerceIn(0f, 0.3f) / 0.3f
         val (year, month) = pageToYearMonth(page, initialYear, initialMonth)
         CalendarMonthPage(
             year = year,
@@ -87,7 +91,8 @@ fun CalendarPager(
             collapseProgress = collapseProgress,
             rowHeightPx = rowHeightPx,
             effectiveWeeks = effectiveWeeks,
-            onRowHeightMeasured = onRowHeightMeasured
+            onRowHeightMeasured = onRowHeightMeasured,
+            modifier = Modifier.alpha(alpha)
         )
     }
 }
