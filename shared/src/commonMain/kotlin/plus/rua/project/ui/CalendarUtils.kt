@@ -9,8 +9,8 @@ import kotlinx.datetime.plus
 /** 无限分页中心页，用于 HorizontalPager 的起始位置 */
 const val START_PAGE = Int.MAX_VALUE / 2
 
-/** 折叠判定阈值：progress > 此值时折叠，< 此值时展开 */
-const val COLLAPSE_THRESHOLD = 0.5f
+/** 折叠判定阈值：折叠时 progress > 此值触发，展开时 progress < (1-此值) 触发 */
+const val COLLAPSE_THRESHOLD = 0.25f
 
 /** 滑动偏移插值阈值：abs(offsetFraction) > 此值时启用插值 */
 const val OFFSET_FRACTION_THRESHOLD = 0.01f

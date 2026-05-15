@@ -102,7 +102,7 @@ class CalendarViewModel(
             val shouldExpand = when {
                 velocityDpPerSec < -FLING_VELOCITY_THRESHOLD_DP -> true  // 快速下滑→展开
                 velocityDpPerSec > FLING_VELOCITY_THRESHOLD_DP -> false  // 快速上滑→保持折叠
-                else -> progress < COLLAPSE_THRESHOLD                    // 慢速按 progress 判断
+                else -> progress < 1f - COLLAPSE_THRESHOLD                    // 慢速按 progress 判断
             }
             if (shouldExpand) {
                 _collapseAnimatable.animateTo(
