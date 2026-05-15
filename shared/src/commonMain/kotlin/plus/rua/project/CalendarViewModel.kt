@@ -17,6 +17,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import kotlin.time.Clock
 import plus.rua.project.ui.COLLAPSE_THRESHOLD
+import plus.rua.project.ui.FLING_VELOCITY_THRESHOLD_DP
 
 data class CalendarDay(
     val date: LocalDate,
@@ -61,10 +62,16 @@ class CalendarViewModel(
     }
 
     // 拖拽超过阈值时自动折叠到周视图，否则回弹到月视图
-    fun onDragEnd() {
+    // velocityDpPerSec: 松手时的 fling 速度 (dp/s)，正值=上滑（折叠方向），负值=下滑（展开方向）
+    fun onDragEnd(velocityDpPerSec: Float = 0f) {
         coroutineScope.launch {
-            val current = _collapseAnimatable.value
-            if (current > COLLAPSE_THRESHOLD) {
+            val progress = _collapseAnimatable.value
+            val shouldCollapse = when {
+                velocityDpPerSec > FLING_VELOCITY_THRESHOLD_DP -> true   // 快速上滑→折叠
+                velocityDpPerSec < -FLING_VELOCITY_THRESHOLD_DP -> false // 快速下滑→展开
+                else -> progress > COLLAPSE_THRESHOLD                    // 慢速按 progress 判断
+            }
+            if (shouldCollapse) {
                 _collapseAnimatable.animateTo(
                     targetValue = 1f,
                     animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)
@@ -88,10 +95,16 @@ class CalendarViewModel(
     }
 
     // 下拉超过阈值时自动展开到月视图，否则回弹到周视图
-    fun onExpandDragEnd() {
+    // velocityDpPerSec: 同上，正值=上滑，负值=下滑
+    fun onExpandDragEnd(velocityDpPerSec: Float = 0f) {
         coroutineScope.launch {
-            val current = _collapseAnimatable.value
-            if (current < COLLAPSE_THRESHOLD) {
+            val progress = _collapseAnimatable.value
+            val shouldExpand = when {
+                velocityDpPerSec < -FLING_VELOCITY_THRESHOLD_DP -> true  // 快速下滑→展开
+                velocityDpPerSec > FLING_VELOCITY_THRESHOLD_DP -> false  // 快速上滑→保持折叠
+                else -> progress < COLLAPSE_THRESHOLD                    // 慢速按 progress 判断
+            }
+            if (shouldExpand) {
                 _collapseAnimatable.animateTo(
                     targetValue = 0f,
                     animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)

@@ -11,11 +11,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import plus.rua.project.CalendarViewModel
 
@@ -33,20 +35,27 @@ fun BottomCard(
     dragRangePx: Float,
     modifier: Modifier = Modifier
 ) {
+    val density = LocalDensity.current
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .pointerInput(viewModel.isCollapsed) {
+                val velocityTracker = androidx.compose.ui.input.pointer.util.VelocityTracker()
                 if (viewModel.isCollapsed) {
                     // 折叠状态：下拉恢复到月视图
                     detectVerticalDragGestures(
                         onDragEnd = {
-                            viewModel.onExpandDragEnd()
+                            val velocity = velocityTracker.calculateVelocity()
+                            // 上滑为正（折叠方向），下拉为负（展开方向）
+                            val velocityDpPerSec = with(density) { -velocity.y.toDp().value }
+                            viewModel.onExpandDragEnd(velocityDpPerSec)
                         },
                         onDragCancel = {
                             viewModel.onExpandDragEnd()
                         }
-                    ) { _, dragAmount ->
+                    ) { change, dragAmount ->
+                        velocityTracker.addPosition(change.uptimeMillis, change.position)
                         val delta = -dragAmount / dragRangePx
                         viewModel.onExpandDrag(delta)
                     }
@@ -54,12 +63,16 @@ fun BottomCard(
                     // 展开状态：上拉折叠到周视图
                     detectVerticalDragGestures(
                         onDragEnd = {
-                            viewModel.onDragEnd()
+                            val velocity = velocityTracker.calculateVelocity()
+                            // 上滑为正（折叠方向），下拉为负（展开方向）
+                            val velocityDpPerSec = with(density) { -velocity.y.toDp().value }
+                            viewModel.onDragEnd(velocityDpPerSec)
                         },
                         onDragCancel = {
                             viewModel.onDragEnd()
                         }
-                    ) { _, dragAmount ->
+                    ) { change, dragAmount ->
+                        velocityTracker.addPosition(change.uptimeMillis, change.position)
                         val delta = -dragAmount / dragRangePx
                         viewModel.onDrag(delta)
                     }

@@ -24,6 +24,9 @@ const val HORIZONTAL_PADDING_DP = 16
 /** BottomCard 拖拽手势范围最小值 (dp)，防止行数少时 dragRange 过小 */
 const val DRAG_RANGE_MIN_DP = 100
 
+/** fling 速度阈值 (dp/s)，超过此速度按方向直接折叠/展开，不受 progress 阈值限制 */
+const val FLING_VELOCITY_THRESHOLD_DP = 800
+
 /** 日历与 BottomCard 之间的间距 (dp)：展开时 */
 const val CARD_GAP_EXPANDED_DP = 24
 
