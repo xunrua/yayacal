@@ -32,7 +32,6 @@ import plus.rua.project.CalendarViewModel
 
 private const val START_PAGE = Int.MAX_VALUE / 2
 private const val ROW_PADDING_DP = 4
-private const val TAG = "CalMonthView"
 
 /**
  * 日历主界面，包含月/周视图切换和折叠动画。
@@ -68,21 +67,23 @@ fun CalendarMonthView(
     val rowPaddingPx = with(density) { ROW_PADDING_DP.dp.toPx() }.toInt()
 
     // 滑动偏移插值行数
-    // 始终以 settledPage 为锚点，currentPage - settledPage 确定方向（-1/0/+1），
-    // abs(offsetFraction) 为过渡进度。
-    // 这样在 currentPage 跳变前后，方向和进度都是连续的：
-    //   跳变前: sp=8月, cp=8月, diff=0, offsetFraction>0 → 目标9月, fraction 0→0.5
-    //   跳变后: sp=8月, cp=9月, diff=+1 → 目标9月, fraction 0.5→0
+    // 以 currentPage 为基准页，offsetFraction 表示基准页与可视区域左边缘的偏移：
+    //   offsetFraction > 0：基准页偏右，可视区域露出下一页（page+1）
+    //   offsetFraction < 0：基准页偏左，可视区域露出上一页（page-1）
+    // 过渡进度 = abs(offsetFraction)，目标页 = page ± 1。
+    // 当 currentPage 跳变（如从 Jul 跳到 Aug），基准页行数也随之跳变，
+    // 但 abs(offsetFraction) 同时从 ~0.5 降到 ~0.5（连续），所以插值结果连续：
+    //   跳变前: cp=Jul(5行), off=+0.49 → base=5, target=Aug(6), lerp(5,6,0.49)=5.49
+    //   跳变后: cp=Aug(6行), off=-0.47 → base=6, target=Jul(5), lerp(6,5,0.47)=5.47 ← 连续！
     val offsetFraction by remember { derivedStateOf { pagerState.currentPageOffsetFraction } }
     val interpolatedWeeks = if (abs(offsetFraction) > 0.01f) {
-        val sp = pagerState.settledPage
-        val diff = pagerState.currentPage - sp  // -1, 0, or +1
-        val targetPage = if (diff != 0) sp + diff else sp + if (offsetFraction > 0) 1 else -1
-        val baseWeeks = calculateWeeksCountForPage(sp, today)
+        val cp = pagerState.currentPage
+        val baseWeeks = calculateWeeksCountForPage(cp, today)
+        val targetPage = cp + if (offsetFraction > 0) 1 else -1
         val targetWeeks = calculateWeeksCountForPage(targetPage, today)
         lerp(baseWeeks.toFloat(), targetWeeks.toFloat(), abs(offsetFraction))
     } else {
-        currentWeeksCount.toFloat()
+        calculateWeeksCountForPage(pagerState.currentPage, today).toFloat()
     }
 
     // 预估行高：DayCell aspectRatio=1，宽度 = (screenWidth - horizontalPadding) / 7
@@ -110,12 +111,6 @@ fun CalendarMonthView(
 
     val calendarAreaHeightPx = headerHeightPx + gridHeightPx + rowPaddingPx
     val cardHeightPx = if (screenHeightPx > 0 && calendarAreaHeightPx > 0) screenHeightPx - calendarAreaHeightPx else 0
-
-    println("[$TAG] p=$p rowH=$rowHeightPx estRowH=$estimatedRowHeightPx effRowH=$effectiveRowHeightPx " +
-            "headerH=$headerHeightPx gridH=$gridHeightPx calAreaH=$calendarAreaHeightPx " +
-            "screenH=$screenHeightPx cardH=$cardHeightPx " +
-            "currentWeeks=$currentWeeksCount interpolatedWeeks=$interpolatedWeeks effectiveWeeks=$effectiveWeeks " +
-            "offsetFraction=$offsetFraction currentPage=${pagerState.currentPage} settledPage=${pagerState.settledPage}")
 
     // 当 rowHeightPx 已知时，用计算的高度约束 pager；否则让 pager 自由扩展以测量行高
     val pagerModifier = if (rowHeightPx > 0 && gridHeightPx > 0) {

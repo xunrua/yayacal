@@ -19,8 +19,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 
-private const val TAG = "CalMonthPage"
-
 /**
  * 月度日历网格页面，支持折叠动画。
  *
@@ -59,11 +57,8 @@ fun CalendarMonthPage(
     val totalHeightDp = if (rowHeightPx > 0) {
         val p = collapseProgress
         val totalPx = H * (1 + (effectiveWeeks - 1) * (1f - p))
-        println("[$TAG] year=$year month=$month rowH=$rowHeightPx H=$H effWeeks=$effectiveWeeks " +
-                "weeks.size=${weeks.size} p=$p totalPx=$totalPx selWeek=$selectedWeekIndex")
         with(density) { totalPx.toDp() }
     } else {
-        println("[$TAG] year=$year month=$month rowH=0 (not yet measured)")
         null
     }
 
@@ -98,7 +93,8 @@ fun CalendarMonthPage(
                 }
                 with(density) { yPx.toDp() }
             } else if (rowHeightPx > 0) {
-                with(density) { (weekIndex * H).toDp() }
+                val yPx = weekIndex * H
+                with(density) { yPx.toDp() }
             } else {
                 0.dp
             }

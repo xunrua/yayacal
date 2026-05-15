@@ -59,7 +59,8 @@ class CalendarViewModel(private val coroutineScope: CoroutineScope) {
     // 拖拽超过 50% 时自动折叠到周视图，否则回弹到月视图
     fun onDragEnd() {
         coroutineScope.launch {
-            if (_collapseAnimatable.value > 0.5f) {
+            val current = _collapseAnimatable.value
+            if (current > 0.5f) {
                 _collapseAnimatable.animateTo(
                     targetValue = 1f,
                     animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)
@@ -85,7 +86,8 @@ class CalendarViewModel(private val coroutineScope: CoroutineScope) {
     // 下拉超过 50% 时自动展开到月视图，否则回弹到周视图
     fun onExpandDragEnd() {
         coroutineScope.launch {
-            if (_collapseAnimatable.value < 0.5f) {
+            val current = _collapseAnimatable.value
+            if (current < 0.5f) {
                 _collapseAnimatable.animateTo(
                     targetValue = 0f,
                     animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)

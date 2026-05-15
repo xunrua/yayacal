@@ -41,8 +41,12 @@ fun BottomCard(
                 if (viewModel.isCollapsed) {
                     // 折叠状态：下拉恢复到月视图
                     detectVerticalDragGestures(
-                        onDragEnd = { viewModel.onExpandDragEnd() },
-                        onDragCancel = { viewModel.onExpandDragEnd() }
+                        onDragEnd = {
+                            viewModel.onExpandDragEnd()
+                        },
+                        onDragCancel = {
+                            viewModel.onExpandDragEnd()
+                        }
                     ) { _, dragAmount ->
                         val delta = -dragAmount / dragRange
                         viewModel.onExpandDrag(delta)
@@ -50,8 +54,12 @@ fun BottomCard(
                 } else {
                     // 展开状态：上拉折叠到周视图
                     detectVerticalDragGestures(
-                        onDragEnd = { viewModel.onDragEnd() },
-                        onDragCancel = { viewModel.onDragEnd() }
+                        onDragEnd = {
+                            viewModel.onDragEnd()
+                        },
+                        onDragCancel = {
+                            viewModel.onDragEnd()
+                        }
                     ) { _, dragAmount ->
                         val delta = -dragAmount / dragRange
                         viewModel.onDrag(delta)
