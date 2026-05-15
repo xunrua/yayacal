@@ -47,6 +47,7 @@ fun CalendarPager(
     modifier: Modifier = Modifier
 ) {
     val initialYear = remember { today.year }
+
     @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     val initialMonth = remember { today.month.number }
     val coroutineScope = rememberCoroutineScope()
@@ -74,13 +75,15 @@ fun CalendarPager(
             selectedDate = selectedDate,
             today = today,
             onDateClick = { date ->
-                    onDateClick(date)
-                    // 点击跨月日期时，滚动到该月对应的页
-                    val clickedYear = date.year
+                onDateClick(date)
+                // 点击跨月日期时，滚动到该月对应的页
+                val clickedYear = date.year
+
                 @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
                 val clickedMonth = date.month.number
                 if (clickedYear != year || clickedMonth != month) {
-                    val targetPage = yearMonthToPage(clickedYear, clickedMonth, initialYear, initialMonth)
+                    val targetPage =
+                        yearMonthToPage(clickedYear, clickedMonth, initialYear, initialMonth)
                     if (targetPage != pagerState.currentPage) {
                         coroutineScope.launch {
                             pagerState.animateScrollToPage(targetPage)

@@ -27,9 +27,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
+import plus.rua.project.CalendarViewModel
 import kotlin.math.abs
 import kotlin.time.Clock
-import plus.rua.project.CalendarViewModel
 
 /**
  * 日历主界面，包含月/周视图切换和折叠动画。
@@ -47,6 +47,7 @@ fun CalendarMonthView(
     val viewModel = remember { CalendarViewModel(coroutineScope) }
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
     val currentYear by remember { derivedStateOf { viewModel.selectedDate.year } }
+
     @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     val currentMonth by remember { derivedStateOf { viewModel.selectedDate.month.number } }
     val density = LocalDensity.current
@@ -62,7 +63,13 @@ fun CalendarMonthView(
     val collapseProgress = viewModel.collapseProgress
     val headerHeightPx = monthHeaderHeightPx + weekdayHeaderHeightPx
     val rowPaddingPx = with(density) { ROW_PADDING_DP.dp.toPx() }.toInt()
-    val cardGapPx = with(density) { lerp(CARD_GAP_EXPANDED_DP.toFloat(), CARD_GAP_COLLAPSED_DP.toFloat(), collapseProgress).dp.toPx() }.toInt()
+    val cardGapPx = with(density) {
+        lerp(
+            CARD_GAP_EXPANDED_DP.toFloat(),
+            CARD_GAP_COLLAPSED_DP.toFloat(),
+            collapseProgress
+        ).dp.toPx()
+    }.toInt()
 
     // 翻页时在相邻月份行数之间插值，使 BottomCard 高度平滑过渡
     // abs(fraction) > 阈值时启用插值，避免静止时的浮点抖动
@@ -85,7 +92,8 @@ fun CalendarMonthView(
     // 加上 Row 的 vertical padding (6dp × 2)
     // 用于 rowHeightPx 尚未测量时的 fallback，避免首次布局高度为 0
     val estimatedRowHeightPx = if (screenWidthPx > 0) {
-        val cellWidth = (screenWidthPx - with(density) { (HORIZONTAL_PADDING_DP * 2).dp.toPx() }) / 7
+        val cellWidth =
+            (screenWidthPx - with(density) { (HORIZONTAL_PADDING_DP * 2).dp.toPx() }) / 7
         val rowPadding = with(density) { (ROW_PADDING_DP * 2).dp.toPx() }
         (cellWidth + rowPadding).toInt()
     } else 0
@@ -110,7 +118,8 @@ fun CalendarMonthView(
 
     // BottomCard 高度 = 屏幕剩余空间（屏幕高度 - 日历区域高度）
     val calendarAreaHeightPx = headerHeightPx + gridHeightPx + rowPaddingPx + cardGapPx
-    val cardHeightPx = if (screenHeightPx > 0 && calendarAreaHeightPx > 0) screenHeightPx - calendarAreaHeightPx else 0
+    val cardHeightPx =
+        if (screenHeightPx > 0 && calendarAreaHeightPx > 0) screenHeightPx - calendarAreaHeightPx else 0
 
     // 行高已知时约束 pager 高度防止内容溢出；否则让 pager 自由扩展以触发首次行高测量
     val pagerModifier = if (rowHeightPx > 0 && gridHeightPx > 0) {
@@ -140,9 +149,10 @@ fun CalendarMonthView(
                 }
             )
             WeekdayHeader(
-                modifier = Modifier.fillMaxWidth().padding(bottom = ROW_PADDING_DP.dp).onSizeChanged { size ->
-                    weekdayHeaderHeightPx = size.height
-                }
+                modifier = Modifier.fillMaxWidth().padding(bottom = ROW_PADDING_DP.dp)
+                    .onSizeChanged { size ->
+                        weekdayHeaderHeightPx = size.height
+                    }
             )
             // 完全折叠且无动画时切换到 WeekPager（单行高效渲染），
             // 否则使用 CalendarPager（含折叠动画和下拉恢复过程）
@@ -168,7 +178,7 @@ fun CalendarMonthView(
                         // 优先选中当月内的今天，否则选中该月1号
                         @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
                         val date = if (year == today.year && today.month.number == month) today
-                                   else LocalDate(year, month, 1)
+                        else LocalDate(year, month, 1)
                         viewModel.selectDate(date)
                     },
                     collapseProgress = viewModel.collapseProgress,
@@ -184,14 +194,14 @@ fun CalendarMonthView(
         }
 
         // 拖拽范围 = 折叠时日历实际高度变化量 (weeks-1)×rowHeight，使手指移动与视觉变化 1:1 对应
-    val dragRangeMinPx = with(density) { DRAG_RANGE_MIN_DP.dp.toPx() }
-    val dragRangePx = if (effectiveRowHeightPx > 0) {
-        maxOf((effectiveWeeks - 1) * effectiveRowHeightPx.toFloat(), dragRangeMinPx)
-    } else {
-        dragRangeMinPx
-    }
+        val dragRangeMinPx = with(density) { DRAG_RANGE_MIN_DP.dp.toPx() }
+        val dragRangePx = if (effectiveRowHeightPx > 0) {
+            maxOf((effectiveWeeks - 1) * effectiveRowHeightPx.toFloat(), dragRangeMinPx)
+        } else {
+            dragRangeMinPx
+        }
 
-    if (cardHeightPx > 0) {
+        if (cardHeightPx > 0) {
             BottomCard(
                 viewModel = viewModel,
                 dragRangePx = dragRangePx,

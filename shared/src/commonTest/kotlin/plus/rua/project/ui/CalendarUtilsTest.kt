@@ -1,9 +1,6 @@
 package plus.rua.project.ui
 
-import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.minus
-import kotlinx.datetime.plus
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

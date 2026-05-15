@@ -1,12 +1,12 @@
 package plus.rua.project.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,10 +45,10 @@ fun MonthHeader(
             transitionSpec = {
                 if (targetState.second > initialState.second) {
                     slideInVertically(tween(250)) { -it } + fadeIn(tween(250)) togetherWith
-                        slideOutVertically(tween(250)) { it } + fadeOut(tween(250))
+                            slideOutVertically(tween(250)) { it } + fadeOut(tween(250))
                 } else {
                     slideInVertically(tween(250)) { it } + fadeIn(tween(250)) togetherWith
-                        slideOutVertically(tween(250)) { -it } + fadeOut(tween(250))
+                            slideOutVertically(tween(250)) { -it } + fadeOut(tween(250))
                 }
             }
         ) { (y, m) ->
@@ -63,10 +63,10 @@ fun MonthHeader(
             transitionSpec = {
                 if (targetState > initialState) {
                     slideInVertically(tween(250)) { -it } + fadeIn(tween(250)) togetherWith
-                        slideOutVertically(tween(250)) { it } + fadeOut(tween(250))
+                            slideOutVertically(tween(250)) { it } + fadeOut(tween(250))
                 } else {
                     slideInVertically(tween(250)) { it } + fadeIn(tween(250)) togetherWith
-                        slideOutVertically(tween(250)) { -it } + fadeOut(tween(250))
+                            slideOutVertically(tween(250)) { -it } + fadeOut(tween(250))
                 }
             }
         ) { week ->

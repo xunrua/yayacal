@@ -73,10 +73,12 @@ fun CalendarMonthPage(
         null
     }
 
-    Box(modifier = modifier.clipToBounds().then(
-        if (totalHeightDp != null) Modifier.height(totalHeightDp)
-        else Modifier
-    )) {
+    Box(
+        modifier = modifier.clipToBounds().then(
+            if (totalHeightDp != null) Modifier.height(totalHeightDp)
+            else Modifier
+        )
+    ) {
         weeks.forEachIndexed { weekIndex, week ->
             val isSelected = hasSelectedWeek && weekIndex == selectedWeekIndex
             val isAbove = hasSelectedWeek && weekIndex < selectedWeekIndex
@@ -135,7 +137,9 @@ fun CalendarMonthPage(
                         )
                         .padding(vertical = ROW_PADDING_DP.dp)
                         .then(
-                            if (isAbove || isBelow) Modifier.graphicsLayer { alpha = 1f - collapseProgress }
+                            if (isAbove || isBelow) Modifier.graphicsLayer {
+                                alpha = 1f - collapseProgress
+                            }
                             else Modifier
                         )
                 ) {

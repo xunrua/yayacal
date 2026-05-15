@@ -15,9 +15,9 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
-import kotlin.time.Clock
 import plus.rua.project.ui.COLLAPSE_THRESHOLD
 import plus.rua.project.ui.FLING_VELOCITY_THRESHOLD_DP
+import kotlin.time.Clock
 
 /**
  * 日历日期数据，用于网格单元格渲染。
@@ -198,7 +198,8 @@ class CalendarViewModel(
         val firstOfMonth = LocalDate(year, month, 1)
         val dayOfWeekOffset = firstOfMonth.dayOfWeek.ordinal
         val startDate = firstOfMonth.minus(DatePeriod(days = dayOfWeekOffset))
-        val nextMonth = if (month == 12) LocalDate(year + 1, 1, 1) else LocalDate(year, month + 1, 1)
+        val nextMonth =
+            if (month == 12) LocalDate(year + 1, 1, 1) else LocalDate(year, month + 1, 1)
         val daysInMonth = nextMonth.minus(DatePeriod(days = 1)).day
         val rows = ((dayOfWeekOffset + daysInMonth - 1) / 7) + 1
         val totalDays = rows * 7

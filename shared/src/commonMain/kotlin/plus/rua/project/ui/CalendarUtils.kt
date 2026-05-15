@@ -60,6 +60,7 @@ fun calculateWeeksCount(year: Int, month: Int): Int {
  */
 fun calculateWeeksCountForPage(page: Int, today: LocalDate): Int {
     val initialYear = today.year
+
     @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     val initialMonth = today.month.number
     val offset = page - START_PAGE
