@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -59,6 +60,22 @@ fun CalendarMonthView(
     var screenHeightPx by remember { mutableIntStateOf(0) }
 
     val pagerState = rememberPagerState(initialPage = START_PAGE, pageCount = { Int.MAX_VALUE })
+
+    // 展开时同步 CalendarPager 页面到 selectedDate 所在月份
+    LaunchedEffect(viewModel.isCollapsed) {
+        if (!viewModel.isCollapsed) {
+            @Suppress("DEPRECATION") // monthNumber 无替代 API
+            val targetPage = yearMonthToPage(
+                viewModel.selectedDate.year,
+                viewModel.selectedDate.month.number,
+                today.year,
+                today.month.number
+            )
+            if (targetPage != pagerState.currentPage) {
+                pagerState.scrollToPage(targetPage)
+            }
+        }
+    }
 
     val collapseProgress = viewModel.collapseProgress
     val headerHeightPx = monthHeaderHeightPx + weekdayHeaderHeightPx
