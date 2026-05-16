@@ -41,7 +41,7 @@ fun MonthHeader(
             .fillMaxWidth()
             .padding(vertical = 14.dp, horizontal = 12.dp)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.Bottom
     ) {
         AnimatedContent(
             targetState = Pair(year, month),
@@ -53,8 +53,7 @@ fun MonthHeader(
                     slideInVertically(tween(250)) { it } + fadeIn(tween(250)) togetherWith
                             slideOutVertically(tween(250)) { -it } + fadeOut(tween(250))
                 }
-            },
-            modifier = Modifier.alignByBaseline()
+            }
         ) { (y, m) ->
             Text(
                 text = "${y}年${m}月",
@@ -73,7 +72,7 @@ fun MonthHeader(
                             slideOutVertically(tween(250)) { -it } + fadeOut(tween(250))
                 }
             },
-            modifier = Modifier.alignByBaseline()
+            modifier = Modifier.padding(bottom = 2.dp)
         ) { week ->
             Text(
                 text = "第${week}周",
