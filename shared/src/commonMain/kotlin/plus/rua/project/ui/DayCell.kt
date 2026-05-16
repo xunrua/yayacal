@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.tyme.solar.SolarDay
 import kotlinx.datetime.LocalDate
 
@@ -84,21 +85,32 @@ fun DayCell(
     ) { state ->
         when (state) {
             DayCellState.SELECTED_TODAY -> MaterialTheme.colorScheme.onPrimaryContainer
-            DayCellState.SELECTED -> MaterialTheme.colorScheme.onPrimary
+            DayCellState.SELECTED -> MaterialTheme.colorScheme.primary
             DayCellState.TODAY -> MaterialTheme.colorScheme.primary
             DayCellState.OTHER_MONTH -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             DayCellState.NORMAL -> MaterialTheme.colorScheme.onSurface
         }
     }
 
-    val selectedColor by transition.animateColor(
+    // 选中今天:实心填充 primaryContainer;其他状态不填充。
+    val selectedFillColor by transition.animateColor(
         transitionSpec = { tween(250, easing = FastOutSlowInEasing) },
-        label = "selectedColor"
+        label = "selectedFillColor"
     ) { state ->
         when (state) {
             DayCellState.SELECTED_TODAY -> MaterialTheme.colorScheme.primaryContainer
-            DayCellState.SELECTED -> MaterialTheme.colorScheme.primary
             else -> Color.Transparent
+        }
+    }
+
+    // 选中非今天:绘制描边圆,避免遮挡右上角角标。
+    val selectedOutlineAlpha by transition.animateFloat(
+        transitionSpec = { tween(250, easing = FastOutSlowInEasing) },
+        label = "selectedOutlineAlpha"
+    ) { state ->
+        when (state) {
+            DayCellState.SELECTED -> 1f
+            else -> 0f
         }
     }
 
@@ -113,6 +125,7 @@ fun DayCell(
     }
 
     val todayBorderColor = MaterialTheme.colorScheme.primary
+    val selectedOutlineColor = MaterialTheme.colorScheme.primary
 
     data class DayAnnotation(val text: String, val isHighlight: Boolean)
 
@@ -163,7 +176,7 @@ fun DayCell(
         if (annotation.isHighlight) {
             when (state) {
                 DayCellState.SELECTED_TODAY -> MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
-                DayCellState.SELECTED -> MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                DayCellState.SELECTED -> MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
                 DayCellState.TODAY -> MaterialTheme.colorScheme.primary
                 DayCellState.OTHER_MONTH -> MaterialTheme.colorScheme.error.copy(alpha = 0.35f)
                 DayCellState.NORMAL -> MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
@@ -171,7 +184,7 @@ fun DayCell(
         } else {
             when (state) {
                 DayCellState.SELECTED_TODAY -> MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                DayCellState.SELECTED -> MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                DayCellState.SELECTED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                 DayCellState.TODAY -> MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                 DayCellState.OTHER_MONTH -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.26f)
                 DayCellState.NORMAL -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
@@ -198,19 +211,29 @@ fun DayCell(
                 }
                 .clip(CircleShape)
                 .drawBehind {
-                    if (revealProgress > 0f) {
-                        val maxRadius = size.minDimension / 2f
+                    val maxRadius = size.minDimension / 2f
+                    val center = Offset(size.width / 2f, size.height / 2f)
+                    if (revealProgress > 0f && selectedFillColor.alpha > 0f) {
                         drawCircle(
-                            color = selectedColor,
+                            color = selectedFillColor,
                             radius = revealProgress * maxRadius,
-                            center = Offset(size.width / 2f, size.height / 2f)
+                            center = center
+                        )
+                    }
+                    if (revealProgress > 0f && selectedOutlineAlpha > 0f) {
+                        val strokePx = 1.5.dp.toPx()
+                        drawCircle(
+                            color = selectedOutlineColor.copy(alpha = selectedOutlineAlpha),
+                            radius = revealProgress * maxRadius - strokePx / 2f,
+                            center = center,
+                            style = Stroke(width = strokePx)
                         )
                     }
                     if (borderAlpha > 0f) {
                         drawCircle(
                             color = todayBorderColor.copy(alpha = borderAlpha.coerceAtMost(1f)),
-                            radius = size.minDimension / 2f,
-                            center = Offset(size.width / 2f, size.height / 2f),
+                            radius = maxRadius,
+                            center = center,
                             style = Stroke(width = borderAlpha.coerceAtMost(1.5f) * 1.5.dp.toPx())
                         )
                     }
@@ -247,7 +270,8 @@ fun DayCell(
                 lineHeight = 9.sp,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 2.dp, end = 4.dp)
+                    .zIndex(1f)
+                    .padding(top = 1.dp, end = 2.dp)
             )
         }
     }
