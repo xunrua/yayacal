@@ -88,22 +88,26 @@ class CalendarViewModel(
 
     /**
      * 切换年视图。仅在展开态可用。
+     *
+     * 切换瞬间立即翻转 isYearView，让对应方向的目标视图立刻接管渲染，
+     * 当前视图被直接移除；动画只作用在目标视图的 scale/alpha 上。
      */
     fun toggleYearView() {
         if (isCollapsed) return
         yearViewJob?.cancel()
         yearViewJob = coroutineScope.launch {
             if (isYearView) {
+                // 年 → 月：先切换状态让月视图开始合成，再等一帧避免首帧抖动
+                isYearView = false
+                withFrameNanos { }
                 _yearViewAnimatable.animateTo(
                     0f, tween(400, easing = FastOutSlowInEasing)
                 )
-                isYearView = false
             } else {
+                // 月 → 年：先切换状态让年视图开始合成
                 yearViewYear = selectedDate.year
                 isYearView = true
                 _yearViewAnimatable.snapTo(0f)
-                // 等待一帧让年视图先完成首次合成与布局，
-                // 避免首次进入年视图时动画时间被合成开销吞掉。
                 withFrameNanos { }
                 _yearViewAnimatable.animateTo(
                     1f, tween(400, easing = FastOutSlowInEasing)
@@ -120,12 +124,13 @@ class CalendarViewModel(
         val date = if (yearViewYear == today.year && today.month.number == month) today
         else LocalDate(yearViewYear, month, 1)
         selectedDate = date
+        isYearView = false
         yearViewJob?.cancel()
         yearViewJob = coroutineScope.launch {
+            withFrameNanos { }
             _yearViewAnimatable.animateTo(
                 0f, tween(400, easing = FastOutSlowInEasing)
             )
-            isYearView = false
         }
     }
 

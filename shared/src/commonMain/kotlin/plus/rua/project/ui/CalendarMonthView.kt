@@ -168,13 +168,15 @@ fun CalendarMonthView(
     val anchorPivotX = ((currentMonth - 1) % 3 + 0.5f) / 3f
     val anchorPivotY = ((currentMonth - 1) / 3 + 0.5f) / 4f
 
-    // 月视图层缩放：从 1f 缩小到 ~0.3f（年网格单格 vs 月视图大小比）
-    val monthScale = 1f - yearProgress * 0.7f
-    val monthAlpha = (1f - yearProgress * 1.4f).coerceIn(0f, 1f)
+    // 过渡进度：0=目标视图刚出现，1=目标视图完全到位。
+    // 月→年时 yearProgress 从 0→1，年→月时从 1→0，因此用 isYearView 同步翻转方向。
+    val transitionProgress = if (viewModel.isYearView) yearProgress else 1f - yearProgress
+    val targetAlpha = transitionProgress.coerceIn(0f, 1f)
 
-    // 年视图层缩放：从 ~3.3f 放大到 1f
-    val yearScale = lerp(3.3f, 1f, yearProgress)
-    val yearAlpha = ((yearProgress - 0.2f) / 0.8f).coerceIn(0f, 1f)
+    // 月视图层缩放：从 0.3f（年网格单格大小）放大到 1f
+    val monthScale = lerp(0.3f, 1f, transitionProgress)
+    // 年视图层缩放：从 3.3f（月视图被放大到一格那么大的反向比例）缩小到 1f
+    val yearScale = lerp(3.3f, 1f, transitionProgress)
 
     Box(
         modifier = modifier
@@ -185,93 +187,118 @@ fun CalendarMonthView(
                 screenHeightPx = size.height
             }
     ) {
-        // 月视图层
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer {
-                    scaleX = monthScale
-                    scaleY = monthScale
-                    alpha = monthAlpha
-                    transformOrigin = TransformOrigin(anchorPivotX, anchorPivotY)
-                }
-                .padding(horizontal = HORIZONTAL_PADDING_DP.dp)
-        ) {
-            MonthHeader(
-                year = currentYear,
-                month = currentMonth,
-                weekNumber = viewModel.getIsoWeekNumber(viewModel.selectedDate),
-                showToday = viewModel.selectedDate != today,
-                onToggleYearView = { viewModel.toggleYearView() },
-                onToday = {
-                    viewModel.selectDate(today)
-                    @Suppress("DEPRECATION") // monthNumber 无替代 API
-                    val targetPage = yearMonthToPage(
-                        today.year, today.month.number,
-                        today.year, today.month.number
-                    )
-                    if (targetPage != pagerState.currentPage) {
-                        coroutineScope.launch { pagerState.animateScrollToPage(targetPage) }
-                    }
-                },
-                modifier = Modifier.onSizeChanged { size ->
-                    monthHeaderHeightPx = size.height
-                }
-            )
-            WeekdayHeader(
-                modifier = Modifier.fillMaxWidth().padding(bottom = ROW_PADDING_DP.dp)
-                    .onSizeChanged { size ->
-                        weekdayHeaderHeightPx = size.height
-                    }
-            )
-            if (viewModel.isCollapsed && viewModel.collapseProgress >= 1f) {
-                WeekPager(
-                    selectedDate = viewModel.selectedDate,
-                    today = today,
-                    onDateClick = { date -> viewModel.selectDate(date) },
-                    onWeekChanged = { weekMonday ->
-                        val weekSunday = weekMonday.plus(DatePeriod(days = 6))
-                        val date = when {
-                            today in weekMonday..weekSunday -> today
-                            weekMonday.month != weekSunday.month -> {
-                                if (weekMonday < viewModel.selectedDate) {
-                                    @Suppress("DEPRECATION") // monthNumber 无替代 API
-                                    LocalDate(weekSunday.year, weekSunday.month.number, 1)
-                                } else {
-                                    weekMonday
-                                }
-                            }
-                            else -> weekMonday
-                        }
-                        viewModel.selectDate(date)
-                    },
-                    modifier = pagerModifier
-                )
+        // 月视图层：仅在非年视图时渲染，年视图激活时立即移除。
+        if (!viewModel.isYearView) {
+            val dragRangeMinPx = with(density) { DRAG_RANGE_MIN_DP.dp.toPx() }
+            val dragRangePx = if (effectiveRowHeightPx > 0) {
+                maxOf((effectiveWeeks - 1) * effectiveRowHeightPx.toFloat(), dragRangeMinPx)
             } else {
-                CalendarPager(
-                    selectedDate = viewModel.selectedDate,
-                    today = today,
-                    onDateClick = { date -> viewModel.selectDate(date) },
-                    onMonthChanged = { year, month ->
-                        @Suppress("DEPRECATION") // monthNumber 无替代 API
-                        val date = if (year == today.year && today.month.number == month) today
-                        else LocalDate(year, month, 1)
-                        viewModel.selectDate(date)
-                    },
-                    collapseProgress = viewModel.collapseProgress,
-                    rowHeightPx = rowHeightPx,
-                    effectiveWeeks = effectiveWeeks,
-                    onRowHeightMeasured = { h ->
-                        if (h > 0) rowHeightPx = h
-                    },
-                    pagerState = pagerState,
-                    modifier = pagerModifier
-                )
+                dragRangeMinPx
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        scaleX = monthScale
+                        scaleY = monthScale
+                        alpha = targetAlpha
+                        transformOrigin = TransformOrigin(anchorPivotX, anchorPivotY)
+                    }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = HORIZONTAL_PADDING_DP.dp)
+                ) {
+                    MonthHeader(
+                        year = currentYear,
+                        month = currentMonth,
+                        weekNumber = viewModel.getIsoWeekNumber(viewModel.selectedDate),
+                        showToday = viewModel.selectedDate != today,
+                        onToggleYearView = { viewModel.toggleYearView() },
+                        onToday = {
+                            viewModel.selectDate(today)
+                            @Suppress("DEPRECATION") // monthNumber 无替代 API
+                            val targetPage = yearMonthToPage(
+                                today.year, today.month.number,
+                                today.year, today.month.number
+                            )
+                            if (targetPage != pagerState.currentPage) {
+                                coroutineScope.launch { pagerState.animateScrollToPage(targetPage) }
+                            }
+                        },
+                        modifier = Modifier.onSizeChanged { size ->
+                            monthHeaderHeightPx = size.height
+                        }
+                    )
+                    WeekdayHeader(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = ROW_PADDING_DP.dp)
+                            .onSizeChanged { size ->
+                                weekdayHeaderHeightPx = size.height
+                            }
+                    )
+                    if (viewModel.isCollapsed && viewModel.collapseProgress >= 1f) {
+                        WeekPager(
+                            selectedDate = viewModel.selectedDate,
+                            today = today,
+                            onDateClick = { date -> viewModel.selectDate(date) },
+                            onWeekChanged = { weekMonday ->
+                                val weekSunday = weekMonday.plus(DatePeriod(days = 6))
+                                val date = when {
+                                    today in weekMonday..weekSunday -> today
+                                    weekMonday.month != weekSunday.month -> {
+                                        if (weekMonday < viewModel.selectedDate) {
+                                            @Suppress("DEPRECATION") // monthNumber 无替代 API
+                                            LocalDate(weekSunday.year, weekSunday.month.number, 1)
+                                        } else {
+                                            weekMonday
+                                        }
+                                    }
+                                    else -> weekMonday
+                                }
+                                viewModel.selectDate(date)
+                            },
+                            modifier = pagerModifier
+                        )
+                    } else {
+                        CalendarPager(
+                            selectedDate = viewModel.selectedDate,
+                            today = today,
+                            onDateClick = { date -> viewModel.selectDate(date) },
+                            onMonthChanged = { year, month ->
+                                @Suppress("DEPRECATION") // monthNumber 无替代 API
+                                val date = if (year == today.year && today.month.number == month) today
+                                else LocalDate(year, month, 1)
+                                viewModel.selectDate(date)
+                            },
+                            collapseProgress = viewModel.collapseProgress,
+                            rowHeightPx = rowHeightPx,
+                            effectiveWeeks = effectiveWeeks,
+                            onRowHeightMeasured = { h ->
+                                if (h > 0) rowHeightPx = h
+                            },
+                            pagerState = pagerState,
+                            modifier = pagerModifier
+                        )
+                    }
+                }
+
+                if (cardHeightPx > 0) {
+                    BottomCard(
+                        viewModel = viewModel,
+                        dragRangePx = dragRangePx,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(with(density) { cardHeightPx.toDp() })
+                            .align(Alignment.BottomCenter)
+                    )
+                }
             }
         }
 
-        // 年视图层：HorizontalPager 支持左右滑动切年
-        if (viewModel.isYearView || yearProgress > 0.01f) {
+        // 年视图层：仅在年视图激活时渲染；HorizontalPager 支持左右滑动切年。
+        if (viewModel.isYearView) {
             HorizontalPager(
                 state = yearPagerState,
                 beyondViewportPageCount = 1,
@@ -281,7 +308,7 @@ fun CalendarMonthView(
                     .graphicsLayer {
                         scaleX = yearScale
                         scaleY = yearScale
-                        alpha = yearAlpha
+                        alpha = targetAlpha
                         transformOrigin = TransformOrigin(anchorPivotX, anchorPivotY)
                     }
                     .padding(horizontal = HORIZONTAL_PADDING_DP.dp)
@@ -309,27 +336,6 @@ fun CalendarMonthView(
                             coroutineScope.launch { yearPagerState.animateScrollToPage(targetPage) }
                         }
                     }
-                )
-            }
-        }
-
-        // BottomCard：年视图时隐藏
-        if (yearProgress < 0.01f) {
-            val dragRangeMinPx = with(density) { DRAG_RANGE_MIN_DP.dp.toPx() }
-            val dragRangePx = if (effectiveRowHeightPx > 0) {
-                maxOf((effectiveWeeks - 1) * effectiveRowHeightPx.toFloat(), dragRangeMinPx)
-            } else {
-                dragRangeMinPx
-            }
-
-            if (cardHeightPx > 0) {
-                BottomCard(
-                    viewModel = viewModel,
-                    dragRangePx = dragRangePx,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(with(density) { cardHeightPx.toDp() })
-                        .align(Alignment.BottomCenter)
                 )
             }
         }
