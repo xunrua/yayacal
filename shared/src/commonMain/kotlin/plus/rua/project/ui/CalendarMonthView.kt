@@ -270,47 +270,45 @@ fun CalendarMonthView(
             }
         }
 
-        // 年视图层：HorizontalPager 支持左右滑动切年
-        if (viewModel.isYearView || yearProgress > 0.01f) {
-            HorizontalPager(
-                state = yearPagerState,
-                beyondViewportPageCount = 1,
-                flingBehavior = PagerDefaults.flingBehavior(state = yearPagerState),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        scaleX = yearScale
-                        scaleY = yearScale
-                        alpha = yearAlpha
-                        transformOrigin = TransformOrigin(anchorPivotX, anchorPivotY)
+        // 年视图层：始终组合以避免首次进入时的组合延迟导致动画丢失
+        HorizontalPager(
+            state = yearPagerState,
+            beyondViewportPageCount = 1,
+            flingBehavior = PagerDefaults.flingBehavior(state = yearPagerState),
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    scaleX = yearScale
+                    scaleY = yearScale
+                    alpha = yearAlpha
+                    transformOrigin = TransformOrigin(anchorPivotX, anchorPivotY)
+                }
+                .padding(horizontal = HORIZONTAL_PADDING_DP.dp)
+        ) { page ->
+            val pageYear = viewModel.selectedDate.year + (page - START_PAGE)
+            YearGridView(
+                year = pageYear,
+                selectedMonth = if (pageYear == currentYear) currentMonth else 0,
+                today = today,
+                onMonthClick = { month ->
+                    viewModel.selectMonthFromYearView(month)
+                    @Suppress("DEPRECATION") // monthNumber 无替代 API
+                    val targetPage = yearMonthToPage(
+                        viewModel.yearViewYear, month,
+                        today.year, today.month.number
+                    )
+                    if (targetPage != pagerState.currentPage) {
+                        coroutineScope.launch { pagerState.scrollToPage(targetPage) }
                     }
-                    .padding(horizontal = HORIZONTAL_PADDING_DP.dp)
-            ) { page ->
-                val pageYear = viewModel.selectedDate.year + (page - START_PAGE)
-                YearGridView(
-                    year = pageYear,
-                    selectedMonth = if (pageYear == currentYear) currentMonth else 0,
-                    today = today,
-                    onMonthClick = { month ->
-                        viewModel.selectMonthFromYearView(month)
-                        @Suppress("DEPRECATION") // monthNumber 无替代 API
-                        val targetPage = yearMonthToPage(
-                            viewModel.yearViewYear, month,
-                            today.year, today.month.number
-                        )
-                        if (targetPage != pagerState.currentPage) {
-                            coroutineScope.launch { pagerState.scrollToPage(targetPage) }
-                        }
-                    },
-                    onYearChange = { newYear ->
-                        val offset = newYear - pageYear
-                        val targetPage = yearPagerState.currentPage + offset
-                        if (targetPage != yearPagerState.currentPage) {
-                            coroutineScope.launch { yearPagerState.animateScrollToPage(targetPage) }
-                        }
+                },
+                onYearChange = { newYear ->
+                    val offset = newYear - pageYear
+                    val targetPage = yearPagerState.currentPage + offset
+                    if (targetPage != yearPagerState.currentPage) {
+                        coroutineScope.launch { yearPagerState.animateScrollToPage(targetPage) }
                     }
-                )
-            }
+                }
+            )
         }
 
         // BottomCard：年视图时隐藏
