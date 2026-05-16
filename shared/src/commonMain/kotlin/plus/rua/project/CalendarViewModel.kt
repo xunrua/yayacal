@@ -71,7 +71,7 @@ class CalendarViewModel(
 
     @Suppress("DEPRECATION") // monthNumber 无替代 API
     var yearViewYear by mutableStateOf(today.year)
-        private set
+        internal set
 
     /**
      * 选中指定日期。
