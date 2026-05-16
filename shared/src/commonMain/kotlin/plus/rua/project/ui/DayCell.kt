@@ -9,7 +9,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,6 +27,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -113,18 +116,18 @@ fun DayCell(
 
     data class DayAnnotation(val text: String, val isHighlight: Boolean)
 
+    val holidayBadge = remember(date) {
+        @Suppress("DEPRECATION") // monthNumber 无替代 API
+        val solarDay = SolarDay.fromYmd(date.year, date.monthNumber, date.day)
+        solarDay.getLegalHoliday()?.let { if (it.isWork()) "班" else "休" }
+    }
+
     val annotation = remember(date) {
+        @Suppress("DEPRECATION") // monthNumber 无替代 API
         val solarDay = SolarDay.fromYmd(date.year, date.monthNumber, date.day)
         val lunarDay = solarDay.getLunarDay()
 
-        // 法定假日优先
-        val legalHoliday = solarDay.getLegalHoliday()
-        if (legalHoliday != null) {
-            val suffix = if (legalHoliday.isWork()) "班" else "休"
-            return@remember DayAnnotation("${legalHoliday.getName()}$suffix", true)
-        }
-
-        // 农历传统节日
+        // 农历传统节日（仅当天）
         val lunarFestival = lunarDay.getFestival()
         if (lunarFestival != null) {
             return@remember DayAnnotation(lunarFestival.getName(), true)
@@ -136,7 +139,7 @@ fun DayCell(
             return@remember DayAnnotation(termDay.getSolarTerm().getName(), true)
         }
 
-        // 公历节日
+        // 公历节日（仅当天）
         val solarFestival = solarDay.getFestival()
         if (solarFestival != null) {
             return@remember DayAnnotation(solarFestival.getName(), true)
@@ -176,52 +179,75 @@ fun DayCell(
         }
     }
 
+    val holidayBadgeColor = when (holidayBadge) {
+        "休" -> MaterialTheme.colorScheme.error
+        "班" -> MaterialTheme.colorScheme.primary
+        else -> Color.Transparent
+    }
+    val holidayBadgeAlpha = if (isCurrentMonth) 1f else 0.38f
+
     Box(
-        modifier = modifier
-            .aspectRatio(1f)
-            .semantics {
-                @Suppress("DEPRECATION")
-                contentDescription = "${date.year}年${date.monthNumber}月${date.day}日"
-            }
-            .clip(CircleShape)
-            .drawBehind {
-                if (revealProgress > 0f) {
-                    val maxRadius = size.minDimension / 2f
-                    drawCircle(
-                        color = selectedColor,
-                        radius = revealProgress * maxRadius,
-                        center = Offset(size.width / 2f, size.height / 2f)
-                    )
-                }
-                if (borderAlpha > 0f) {
-                    drawCircle(
-                        color = todayBorderColor.copy(alpha = borderAlpha.coerceAtMost(1f)),
-                        radius = size.minDimension / 2f,
-                        center = Offset(size.width / 2f, size.height / 2f),
-                        style = Stroke(width = borderAlpha.coerceAtMost(1.5f) * 1.5.dp.toPx())
-                    )
-                }
-            }
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+        modifier = modifier.aspectRatio(1f)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .semantics {
+                    @Suppress("DEPRECATION")
+                    contentDescription = "${date.year}年${date.monthNumber}月${date.day}日"
+                }
+                .clip(CircleShape)
+                .drawBehind {
+                    if (revealProgress > 0f) {
+                        val maxRadius = size.minDimension / 2f
+                        drawCircle(
+                            color = selectedColor,
+                            radius = revealProgress * maxRadius,
+                            center = Offset(size.width / 2f, size.height / 2f)
+                        )
+                    }
+                    if (borderAlpha > 0f) {
+                        drawCircle(
+                            color = todayBorderColor.copy(alpha = borderAlpha.coerceAtMost(1f)),
+                            radius = size.minDimension / 2f,
+                            center = Offset(size.width / 2f, size.height / 2f),
+                            style = Stroke(width = borderAlpha.coerceAtMost(1.5f) * 1.5.dp.toPx())
+                        )
+                    }
+                }
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
         ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = date.day.toString(),
+                    textAlign = TextAlign.Center,
+                    color = contentColor,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = annotation.text,
+                    textAlign = TextAlign.Center,
+                    color = lunarColor,
+                    fontSize = 7.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Clip,
+                    lineHeight = 9.sp
+                )
+            }
+        }
+        if (holidayBadge != null) {
             Text(
-                text = date.day.toString(),
-                textAlign = TextAlign.Center,
-                color = contentColor,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = annotation.text,
-                textAlign = TextAlign.Center,
-                color = lunarColor,
-                fontSize = 7.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Clip,
-                lineHeight = 9.sp
+                text = holidayBadge,
+                color = holidayBadgeColor.copy(alpha = holidayBadgeAlpha),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                lineHeight = 9.sp,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 2.dp, end = 4.dp)
             )
         }
     }
