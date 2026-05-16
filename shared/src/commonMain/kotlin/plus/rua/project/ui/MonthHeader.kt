@@ -41,7 +41,7 @@ fun MonthHeader(
             .fillMaxWidth()
             .padding(vertical = 14.dp, horizontal = 12.dp)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.Bottom
     ) {
         AnimatedContent(
             targetState = Pair(year, month),

@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.drop
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.daysUntil
 import kotlinx.datetime.plus
 import kotlin.math.abs
 
@@ -41,6 +42,15 @@ fun WeekPager(
         initialPage = START_PAGE,
         pageCount = { Int.MAX_VALUE }
     )
+
+    // selectedDate 外部变更（如点击回到今天）时，滚动到对应周
+    LaunchedEffect(selectedDate) {
+        val targetMonday = selectedDate.toWeekMonday()
+        val targetPage = START_PAGE + (initialWeekMonday.daysUntil(targetMonday) / 7)
+        if (pagerState.currentPage != targetPage) {
+            pagerState.animateScrollToPage(targetPage)
+        }
+    }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }.drop(1).collect { page ->
