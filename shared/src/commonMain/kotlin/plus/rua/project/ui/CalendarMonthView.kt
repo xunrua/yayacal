@@ -183,9 +183,14 @@ fun CalendarMonthView(
                         val date = when {
                             today in weekMonday..weekSunday -> today
                             weekMonday.month != weekSunday.month -> {
-                                // 跨月周：选中下个月的1号
-                                @Suppress("DEPRECATION") // monthNumber 无替代 API
-                                LocalDate(weekSunday.year, weekSunday.month.number, 1)
+                                if (weekMonday < viewModel.selectedDate) {
+                                    // 后退到跨月周（如从5月回到4月27-5月3）：选较晚月份1号
+                                    @Suppress("DEPRECATION") // monthNumber 无替代 API
+                                    LocalDate(weekSunday.year, weekSunday.month.number, 1)
+                                } else {
+                                    // 前进到跨月周（如从4月前进到4月27-5月3）：选该周周一
+                                    weekMonday
+                                }
                             }
                             else -> weekMonday
                         }
