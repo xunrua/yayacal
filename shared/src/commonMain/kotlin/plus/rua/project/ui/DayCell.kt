@@ -5,6 +5,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -114,17 +115,6 @@ fun DayCell(
         }
     }
 
-    val borderAlpha by transition.animateFloat(
-        transitionSpec = { tween(250, easing = FastOutSlowInEasing) },
-        label = "borderAlpha"
-    ) { state ->
-        when (state) {
-            DayCellState.TODAY -> 1.5f
-            else -> 0f
-        }
-    }
-
-    val todayBorderColor = MaterialTheme.colorScheme.primary
     val selectedOutlineColor = MaterialTheme.colorScheme.primary
 
     data class DayAnnotation(val text: String, val isHighlight: Boolean)
@@ -229,14 +219,6 @@ fun DayCell(
                             style = Stroke(width = strokePx)
                         )
                     }
-                    if (borderAlpha > 0f) {
-                        drawCircle(
-                            color = todayBorderColor.copy(alpha = borderAlpha.coerceAtMost(1f)),
-                            radius = maxRadius,
-                            center = center,
-                            style = Stroke(width = borderAlpha.coerceAtMost(1.5f) * 1.5.dp.toPx())
-                        )
-                    }
                 }
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center
@@ -272,6 +254,8 @@ fun DayCell(
                     .align(Alignment.TopEnd)
                     .zIndex(1f)
                     .padding(top = 1.dp, end = 2.dp)
+                    .background(MaterialTheme.colorScheme.surface, CircleShape)
+                    .padding(horizontal = 2.dp)
             )
         }
     }
