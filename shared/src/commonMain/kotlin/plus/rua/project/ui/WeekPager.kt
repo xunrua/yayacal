@@ -78,7 +78,8 @@ fun WeekPager(
                 val date = weekMonday.plus(DatePeriod(days = dayOffset))
                 DayCell(
                     date = date,
-                    isCurrentMonth = true,
+                    isCurrentMonth = date.month == selectedDate.month
+                            && date.year == selectedDate.year,
                     isSelected = date == selectedDate,
                     isToday = date == today,
                     onClick = { onDateClick(date) },
