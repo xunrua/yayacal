@@ -27,16 +27,18 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
-import kotlinx.datetime.todayIn
+
+private val WEEKDAY_LABELS = listOf("一", "二", "三", "四", "五", "六", "日")
 
 /**
  * 年度网格视图，显示 4×3 精简月历网格，支持年份切换。
  *
- * 每格显示一个精简版月历（月份标题 + 日期数字网格），
+ * 每格显示一个精简版月历（月份标题 + 星期行 + 日期数字网格），
  * 选中月份高亮，点击进入该月。
  *
  * @param year 显示的年份
  * @param selectedMonth 当前选中月份（1-12）
+ * @param today 今天的日期
  * @param onMonthClick 月份点击回调
  * @param onYearChange 年份切换回调
  * @param modifier 外部布局修饰符
@@ -95,7 +97,7 @@ fun YearGridView(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 4.dp),
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
             (0 until 4).forEach { row ->
@@ -121,7 +123,7 @@ fun YearGridView(
 }
 
 /**
- * 精简版月历：月份标题 + 日期数字网格。
+ * 精简版月历：月份标题 + 星期行 + 日期数字网格。
  */
 @Composable
 private fun MiniMonth(
@@ -138,6 +140,7 @@ private fun MiniMonth(
     } else {
         MaterialTheme.colorScheme.onSurface
     }
+    val weekdayColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
     val dayColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
     val otherMonthColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
     val todayBgColor = MaterialTheme.colorScheme.primary
@@ -145,19 +148,33 @@ private fun MiniMonth(
     Column(
         modifier = modifier
             .padding(2.dp)
-            .clip(CircleShape)
             .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
+            .padding(vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 月份标题
         Text(
             text = "${month}月",
             color = titleColor,
-            fontSize = 10.sp,
+            fontSize = 9.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             textAlign = TextAlign.Center
         )
+        // 星期行
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            WEEKDAY_LABELS.forEach { label ->
+                Text(
+                    text = label,
+                    color = weekdayColor,
+                    fontSize = 6.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
         // 日期网格
         days.chunked(7).forEach { week ->
             Row(
@@ -165,14 +182,15 @@ private fun MiniMonth(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 week.forEach { dayData ->
-                    val isToday = dayData.date == today
+                    val isToday = dayData.date == today && dayData.isCurrentMonth
                     val color = when {
                         !dayData.isCurrentMonth -> otherMonthColor
-                        isToday -> MaterialTheme.colorScheme.primary
+                        isToday -> MaterialTheme.colorScheme.onPrimary
                         else -> dayColor
                     }
                     Box(
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.weight(1f)
                     ) {
                         if (isToday) {
                             Box(
@@ -189,10 +207,10 @@ private fun MiniMonth(
                         }
                         Text(
                             text = if (dayData.isCurrentMonth) dayData.date.day.toString() else "",
-                            color = if (isToday) MaterialTheme.colorScheme.onPrimary else color,
-                            fontSize = 7.sp,
+                            color = color,
+                            fontSize = 6.sp,
                             textAlign = TextAlign.Center,
-                            lineHeight = 10.sp
+                            lineHeight = 9.sp
                         )
                     }
                 }

@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
@@ -58,6 +59,8 @@ class CalendarViewModel(
     private val _collapseAnimatable = Animatable(0f)
     val collapseProgress: Float get() = _collapseAnimatable.value
 
+    private var yearViewJob: Job? = null
+
     @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     val currentMonth: Int get() = selectedDate.month.number
 
@@ -87,7 +90,8 @@ class CalendarViewModel(
      */
     fun toggleYearView() {
         if (isCollapsed) return
-        coroutineScope.launch {
+        yearViewJob?.cancel()
+        yearViewJob = coroutineScope.launch {
             if (isYearView) {
                 _yearViewAnimatable.animateTo(
                     0f, tween(400, easing = FastOutSlowInEasing)
@@ -112,7 +116,8 @@ class CalendarViewModel(
         val date = if (yearViewYear == today.year && today.month.number == month) today
         else LocalDate(yearViewYear, month, 1)
         selectedDate = date
-        coroutineScope.launch {
+        yearViewJob?.cancel()
+        yearViewJob = coroutineScope.launch {
             _yearViewAnimatable.animateTo(
                 0f, tween(400, easing = FastOutSlowInEasing)
             )
