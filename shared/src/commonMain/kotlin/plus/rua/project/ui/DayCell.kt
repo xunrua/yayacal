@@ -78,7 +78,7 @@ fun DayCell(
     val transition = updateTransition(targetState = currentState, label = "dayCell")
 
     val revealProgress by transition.animateFloat(
-        transitionSpec = { tween(250, easing = FastOutSlowInEasing) },
+        transitionSpec = { tween(150, easing = FastOutSlowInEasing) },
         label = "revealProgress"
     ) { state ->
         when (state) {
@@ -88,7 +88,7 @@ fun DayCell(
     }
 
     val contentColor by transition.animateColor(
-        transitionSpec = { tween(250, easing = FastOutSlowInEasing) },
+        transitionSpec = { tween(150, easing = FastOutSlowInEasing) },
         label = "contentColor"
     ) { state ->
         when (state) {
@@ -102,7 +102,7 @@ fun DayCell(
 
     // 选中今天:实心填充 primaryContainer;其他状态不填充。
     val selectedFillColor by transition.animateColor(
-        transitionSpec = { tween(250, easing = FastOutSlowInEasing) },
+        transitionSpec = { tween(150, easing = FastOutSlowInEasing) },
         label = "selectedFillColor"
     ) { state ->
         when (state) {
@@ -113,7 +113,7 @@ fun DayCell(
 
     // 选中非今天:绘制描边圆,避免遮挡右上角角标。
     val selectedOutlineAlpha by transition.animateFloat(
-        transitionSpec = { tween(250, easing = FastOutSlowInEasing) },
+        transitionSpec = { tween(150, easing = FastOutSlowInEasing) },
         label = "selectedOutlineAlpha"
     ) { state ->
         when (state) {
@@ -167,7 +167,7 @@ fun DayCell(
     }
 
     val lunarColor by transition.animateColor(
-        transitionSpec = { tween(250, easing = FastOutSlowInEasing) },
+        transitionSpec = { tween(150, easing = FastOutSlowInEasing) },
         label = "lunarColor"
     ) { state ->
         if (annotation.isHighlight) {
