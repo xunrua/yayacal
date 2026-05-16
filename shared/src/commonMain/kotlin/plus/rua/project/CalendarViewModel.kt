@@ -78,6 +78,19 @@ class CalendarViewModel(
         internal set
 
     /**
+     * 个人轮班。与法定节假日完全独立,不受调休影响。
+     * MVP 默认:2026-05-15 起,2 班 2 休循环。后续接入设置页与持久化。
+     */
+    var shiftPattern: ShiftPattern? by mutableStateOf(
+        ShiftPattern(
+            anchorDate = LocalDate(2026, 5, 15),
+            cycle = listOf(ShiftKind.WORK, ShiftKind.WORK, ShiftKind.OFF, ShiftKind.OFF)
+        )
+    )
+
+    fun shiftKindAt(date: LocalDate): ShiftKind? = shiftPattern?.kindAt(date)
+
+    /**
      * 选中指定日期。
      *
      * @param date 目标日期

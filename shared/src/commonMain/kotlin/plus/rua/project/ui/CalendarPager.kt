@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.number
+import plus.rua.project.ShiftKind
 import kotlin.math.abs
 
 /**
@@ -42,6 +43,7 @@ fun CalendarPager(
     collapseProgress: Float,
     rowHeightPx: Int,
     effectiveWeeks: Float,
+    shiftKindAt: (LocalDate) -> ShiftKind?,
     onRowHeightMeasured: ((Int) -> Unit)? = null,
     pagerState: PagerState,
     modifier: Modifier = Modifier
@@ -94,6 +96,7 @@ fun CalendarPager(
             collapseProgress = collapseProgress,
             rowHeightPx = rowHeightPx,
             effectiveWeeks = effectiveWeeks,
+            shiftKindAt = shiftKindAt,
             onRowHeightMeasured = onRowHeightMeasured,
             modifier = Modifier.alpha(alpha)
         )

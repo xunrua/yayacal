@@ -18,6 +18,7 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.plus
+import plus.rua.project.ShiftKind
 import kotlin.math.abs
 
 /**
@@ -35,6 +36,7 @@ fun WeekPager(
     today: LocalDate,
     onDateClick: (LocalDate) -> Unit,
     onWeekChanged: (LocalDate) -> Unit,
+    shiftKindAt: (LocalDate) -> ShiftKind?,
     modifier: Modifier = Modifier
 ) {
     val initialWeekMonday = remember { selectedDate.toWeekMonday() }
@@ -82,6 +84,7 @@ fun WeekPager(
                             && date.year == selectedDate.year,
                     isSelected = date == selectedDate,
                     isToday = date == today,
+                    shiftKind = shiftKindAt(date),
                     onClick = { onDateClick(date) },
                     modifier = Modifier.weight(1f)
                 )

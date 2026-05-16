@@ -259,6 +259,7 @@ fun CalendarMonthView(
                                 }
                                 viewModel.selectDate(date)
                             },
+                            shiftKindAt = { date -> viewModel.shiftKindAt(date) },
                             modifier = pagerModifier
                         )
                     } else {
@@ -275,6 +276,7 @@ fun CalendarMonthView(
                             collapseProgress = viewModel.collapseProgress,
                             rowHeightPx = rowHeightPx,
                             effectiveWeeks = effectiveWeeks,
+                            shiftKindAt = { date -> viewModel.shiftKindAt(date) },
                             onRowHeightMeasured = { h ->
                                 if (h > 0) rowHeightPx = h
                             },

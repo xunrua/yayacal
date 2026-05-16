@@ -22,6 +22,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
+import plus.rua.project.ShiftKind
 
 /**
  * 月度日历网格页面，支持两阶段折叠动画。
@@ -50,6 +51,7 @@ fun CalendarMonthPage(
     collapseProgress: Float,
     rowHeightPx: Int,
     effectiveWeeks: Float,
+    shiftKindAt: (LocalDate) -> ShiftKind?,
     onRowHeightMeasured: ((Int) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -152,6 +154,7 @@ fun CalendarMonthPage(
                             isCurrentMonth = dayData.isCurrentMonth,
                             isSelected = dayData.date == selectedDate,
                             isToday = dayData.date == today,
+                            shiftKind = shiftKindAt(dayData.date),
                             onClick = { onDateClick(dayData.date) },
                             modifier = Modifier.weight(1f)
                         )

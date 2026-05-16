@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.tyme.solar.SolarDay
 import kotlinx.datetime.LocalDate
+import plus.rua.project.ShiftKind
 
 enum class DayCellState {
     NORMAL, OTHER_MONTH, TODAY, SELECTED, SELECTED_TODAY
@@ -48,6 +49,7 @@ enum class DayCellState {
  * @param isCurrentMonth 是否属于当前显示月份
  * @param isSelected 是否为选中日期
  * @param isToday 是否为今天
+ * @param shiftKind 个人轮班类型,左上角胶囊显示;null 表示不显示。与法定调休完全独立。
  * @param onClick 点击回调
  * @param modifier 外部布局修饰符
  */
@@ -57,6 +59,7 @@ fun DayCell(
     isCurrentMonth: Boolean,
     isSelected: Boolean,
     isToday: Boolean,
+    shiftKind: ShiftKind?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -242,6 +245,33 @@ fun DayCell(
                     lineHeight = 9.sp
                 )
             }
+        }
+        if (shiftKind != null) {
+            val shiftBgColor = if (shiftKind == ShiftKind.WORK) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.error
+            }
+            val shiftFgColor = if (shiftKind == ShiftKind.WORK) {
+                MaterialTheme.colorScheme.onPrimary
+            } else {
+                MaterialTheme.colorScheme.onError
+            }
+            val shiftLabel = if (shiftKind == ShiftKind.WORK) "班" else "休"
+            val shiftAlpha = if (isCurrentMonth) 1f else 0.38f
+            Text(
+                text = shiftLabel,
+                color = shiftFgColor.copy(alpha = shiftAlpha),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                lineHeight = 9.sp,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .zIndex(1f)
+                    .padding(top = 1.dp, start = 2.dp)
+                    .background(shiftBgColor.copy(alpha = shiftAlpha), CircleShape)
+                    .padding(horizontal = 2.dp)
+            )
         }
         if (holidayBadge != null) {
             Text(
