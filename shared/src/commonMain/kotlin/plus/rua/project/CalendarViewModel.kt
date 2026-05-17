@@ -1,11 +1,15 @@
 package plus.rua.project
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
@@ -56,10 +60,41 @@ class CalendarViewModel(
     private val _collapseAnimatable = Animatable(0f)
     val collapseProgress: Float get() = _collapseAnimatable.value
 
+    private var yearViewJob: Job? = null
+
     @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     val currentMonth: Int get() = selectedDate.month.number
 
     val currentYear: Int get() = selectedDate.year
+
+    var isYearView by mutableStateOf(false)
+        private set
+
+    private val _yearViewAnimatable = Animatable(0f)
+    val yearViewProgress: Float get() = _yearViewAnimatable.value
+
+    @Suppress("DEPRECATION") // monthNumber 无替代 API
+    var yearViewYear by mutableStateOf(today.year)
+        internal set
+
+    /**
+     * 个人轮班。与法定节假日完全独立,不受调休影响。
+     * MVP 默认:2026-05-15 起,2 班 2 休循环。后续接入设置页与持久化。
+     */
+    var shiftPattern: ShiftPattern? by mutableStateOf(
+        ShiftPattern(
+            anchorDate = LocalDate(2026, 5, 15),
+            cycle = listOf(ShiftKind.WORK, ShiftKind.WORK, ShiftKind.OFF, ShiftKind.OFF)
+        )
+    )
+
+    fun shiftKindAt(date: LocalDate): ShiftKind? = shiftPattern?.kindAt(date)
+
+    /**
+     * 是否在右上角显示法定调休角标。默认禁用,此时右上角让位给个人排班。
+     * 开启后回到旧版布局:左上角=排班,右上角=法定调休。后续接入设置页持久化。
+     */
+    var showLegalHoliday by mutableStateOf(false)
 
     /**
      * 选中指定日期。
@@ -68,6 +103,62 @@ class CalendarViewModel(
      */
     fun selectDate(date: LocalDate) {
         selectedDate = date
+    }
+
+    /**
+     * 切换年视图。仅在展开态可用。
+     *
+     * 切换瞬间立即翻转 isYearView，让对应方向的目标视图立刻接管渲染，
+     * 当前视图被直接移除；动画只作用在目标视图的 scale/alpha 上。
+     */
+    fun toggleYearView() {
+        if (isCollapsed) return
+        yearViewJob?.cancel()
+        yearViewJob = coroutineScope.launch {
+            if (isYearView) {
+                // 年 → 月：先切换状态让月视图开始合成，再等一帧避免首帧抖动
+                isYearView = false
+                withFrameNanos { }
+                _yearViewAnimatable.animateTo(
+                    0f, tween(400, easing = FastOutSlowInEasing)
+                )
+            } else {
+                // 月 → 年：先切换状态让年视图开始合成
+                yearViewYear = selectedDate.year
+                isYearView = true
+                _yearViewAnimatable.snapTo(0f)
+                withFrameNanos { }
+                _yearViewAnimatable.animateTo(
+                    1f, tween(400, easing = FastOutSlowInEasing)
+                )
+            }
+        }
+    }
+
+    /**
+     * 从年视图选择月份后返回月视图。
+     */
+    @Suppress("DEPRECATION") // monthNumber 无替代 API
+    fun selectMonthFromYearView(month: Int) {
+        val date = if (yearViewYear == today.year && today.month.number == month) today
+        else LocalDate(yearViewYear, month, 1)
+        selectedDate = date
+        isYearView = false
+        yearViewJob?.cancel()
+        yearViewJob = coroutineScope.launch {
+            withFrameNanos { }
+            _yearViewAnimatable.animateTo(
+                0f, tween(400, easing = FastOutSlowInEasing)
+            )
+        }
+    }
+
+    fun incrementYear() {
+        yearViewYear++
+    }
+
+    fun decrementYear() {
+        yearViewYear--
     }
 
     /**

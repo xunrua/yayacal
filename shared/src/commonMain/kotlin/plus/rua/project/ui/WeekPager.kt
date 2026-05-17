@@ -16,7 +16,9 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.drop
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.daysUntil
 import kotlinx.datetime.plus
+import plus.rua.project.ShiftKind
 import kotlin.math.abs
 
 /**
@@ -26,6 +28,8 @@ import kotlin.math.abs
  * @param today 今天的日期
  * @param onDateClick 日期点击回调
  * @param onWeekChanged 周切换回调，滑动到新周时触发，参数为该周周一日期
+ * @param shiftKindAt 日期 → 个人轮班类型的查询闭包
+ * @param showLegalHoliday 是否显示法定调休角标。详见 [DayCell] 的同名参数。
  * @param modifier 外部布局修饰符
  */
 @Composable
@@ -34,6 +38,8 @@ fun WeekPager(
     today: LocalDate,
     onDateClick: (LocalDate) -> Unit,
     onWeekChanged: (LocalDate) -> Unit,
+    shiftKindAt: (LocalDate) -> ShiftKind?,
+    showLegalHoliday: Boolean,
     modifier: Modifier = Modifier
 ) {
     val initialWeekMonday = remember { selectedDate.toWeekMonday() }
@@ -41,6 +47,15 @@ fun WeekPager(
         initialPage = START_PAGE,
         pageCount = { Int.MAX_VALUE }
     )
+
+    // selectedDate 外部变更（如点击回到今天）时，滚动到对应周
+    LaunchedEffect(selectedDate) {
+        val targetMonday = selectedDate.toWeekMonday()
+        val targetPage = START_PAGE + (initialWeekMonday.daysUntil(targetMonday) / 7)
+        if (pagerState.currentPage != targetPage) {
+            pagerState.animateScrollToPage(targetPage)
+        }
+    }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }.drop(1).collect { page ->
@@ -68,9 +83,12 @@ fun WeekPager(
                 val date = weekMonday.plus(DatePeriod(days = dayOffset))
                 DayCell(
                     date = date,
-                    isCurrentMonth = true,
+                    isCurrentMonth = date.month == selectedDate.month
+                            && date.year == selectedDate.year,
                     isSelected = date == selectedDate,
                     isToday = date == today,
+                    shiftKind = shiftKindAt(date),
+                    showLegalHoliday = showLegalHoliday,
                     onClick = { onDateClick(date) },
                     modifier = Modifier.weight(1f)
                 )

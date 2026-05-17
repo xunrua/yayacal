@@ -1,8 +1,8 @@
 package plus.rua.project.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -16,17 +16,19 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.compose.material3.MaterialTheme
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
+import plus.rua.project.ShiftKind
 
 /**
- * 月度日历网格页面，支持折叠动画。
+ * 月度日历网格页面，支持两阶段折叠动画。
  *
- * 折叠时非选中行高度按 (1-p) 缩放，选中行保持原始高度，
- * 所有行通过手动 y-offset 定位，形成向选中行收缩的视觉效果。
+ * Phase 1：所有行整体上移，直到选中行到达顶部 (y=0)，上方行被裁剪并淡出。
+ * Phase 2：选中行固定不动，下方行整体上移并淡出。
  *
  * @param year 年份
  * @param month 月份（1-12）
@@ -36,6 +38,8 @@ import kotlinx.datetime.plus
  * @param collapseProgress 折叠进度，0f=展开，1f=折叠
  * @param rowHeightPx 从外层传入的锁定行高（像素），折叠过程中不变
  * @param effectiveWeeks 当前有效行数（含翻页插值），用于计算总高度
+ * @param shiftKindAt 日期 → 个人轮班类型的查询闭包
+ * @param showLegalHoliday 是否显示法定调休角标。详见 [DayCell] 的同名参数。
  * @param onRowHeightMeasured 首次行高测量回调，外层据此锁定行高
  * @param modifier 外部布局修饰符
  */
@@ -49,6 +53,8 @@ fun CalendarMonthPage(
     collapseProgress: Float,
     rowHeightPx: Int,
     effectiveWeeks: Float,
+    shiftKindAt: (LocalDate) -> ShiftKind?,
+    showLegalHoliday: Boolean,
     onRowHeightMeasured: ((Int) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -58,20 +64,33 @@ fun CalendarMonthPage(
     val density = LocalDensity.current
 
     val weeks = days.chunked(7)
-    val selectedWeekIndex = remember(weeks, selectedDate) {
+    val anchorIndex = remember(weeks, selectedDate) {
         weeks.indexOfFirst { week -> week.any { it.date == selectedDate } }
     }
-
-    val hasSelectedWeek = selectedWeekIndex >= 0
+    val hasAnchor = anchorIndex >= 0
     val h = rowHeightPx.toFloat()
 
-    // 使用与 CalendarMonthView 一致的 effectiveWeeks 计算高度，避免滑动中高度不匹配
+    // Phase 1 结束点：选中行到顶部所需的比例
+    val phase1End = if (hasAnchor && anchorIndex > 0 && weeks.size > 1) {
+        anchorIndex.toFloat() / (weeks.size - 1)
+    } else 0f
+
+    val phase1 = if (phase1End > 0f) {
+        (collapseProgress / phase1End).coerceIn(0f, 1f)
+    } else if (collapseProgress > 0f) 1f else 0f
+
+    val phase2 = if (phase1End < 1f && collapseProgress > phase1End) {
+        ((collapseProgress - phase1End) / (1f - phase1End)).coerceIn(0f, 1f)
+    } else 0f
+
+    val belowRowsHeight = if (hasAnchor) {
+        (weeks.size - 1 - anchorIndex) * h
+    } else 0f
+
     val totalHeightDp = if (rowHeightPx > 0) {
         val totalPx = h * (1 + (effectiveWeeks - 1) * (1f - collapseProgress))
         with(density) { totalPx.toDp() }
-    } else {
-        null
-    }
+    } else null
 
     Box(
         modifier = modifier.clipToBounds().then(
@@ -80,49 +99,40 @@ fun CalendarMonthPage(
         )
     ) {
         weeks.forEachIndexed { weekIndex, week ->
-            val isSelected = hasSelectedWeek && weekIndex == selectedWeekIndex
-            val isAbove = hasSelectedWeek && weekIndex < selectedWeekIndex
-            val isBelow = hasSelectedWeek && weekIndex > selectedWeekIndex
+            val isAnchor = hasAnchor && weekIndex == anchorIndex
+            val isAbove = hasAnchor && weekIndex < anchorIndex
+            val isBelow = hasAnchor && weekIndex > anchorIndex
 
-            val rowScale = when {
-                isAbove || isBelow -> 1f - collapseProgress
-                else -> 1f
-            }
-
-            val rowHeightDp = if (rowHeightPx > 0 && rowScale > 0.01f) {
-                with(density) { (h * rowScale).toDp() }
-            } else if (rowHeightPx <= 0) {
-                null
-            } else {
-                0.dp
-            }
-
-            val yOffsetDp = if (rowHeightPx > 0 && hasSelectedWeek) {
+            val yOffsetDp = if (rowHeightPx > 0) {
                 val yPx = when {
-                    isAbove -> weekIndex * h * (1f - collapseProgress)
-                    isSelected -> selectedWeekIndex * h * (1f - collapseProgress)
-                    isBelow -> selectedWeekIndex * h * (1f - collapseProgress) + h + (weekIndex - selectedWeekIndex - 1) * h * (1f - collapseProgress)
+                    !hasAnchor -> weekIndex * h - collapseProgress * weeks.size * h
+                    isAnchor -> anchorIndex * h * (1f - phase1)
+                    isAbove -> weekIndex * h - phase1 * anchorIndex * h
+                    isBelow -> weekIndex * h - phase1 * anchorIndex * h - phase2 * belowRowsHeight
                     else -> weekIndex * h
                 }
                 with(density) { yPx.toDp() }
-            } else if (rowHeightPx > 0) {
-                val yPx = weekIndex * h
-                with(density) { yPx.toDp() }
-            } else {
-                0.dp
+            } else 0.dp
+
+            val rowAlpha = when {
+                !hasAnchor -> (1f - collapseProgress).coerceIn(0f, 1f)
+                isAnchor -> 1f
+                isAbove -> (1f - phase1).coerceIn(0f, 1f)
+                isBelow -> (1f - phase2).coerceIn(0f, 1f)
+                else -> 1f
             }
 
-            val shouldShow = rowHeightDp == null || rowHeightDp > 0.dp
-
-            val skipDayCells = (isAbove || isBelow) && rowScale < 0.1f && collapseProgress > 0.9f
-
-            if (shouldShow) {
+            if (rowAlpha > 0.01f) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .zIndex(if (isSelected) 1f else 0f)
+                        .zIndex(if (isAnchor) 1f else 0f)
                         .then(
-                            if (rowHeightDp != null) Modifier.height(rowHeightDp)
+                            if (rowHeightPx > 0) Modifier.height(with(density) { h.toDp() })
+                            else Modifier
+                        )
+                        .then(
+                            if (isAnchor && phase1 >= 1f) Modifier.background(MaterialTheme.colorScheme.surface)
                             else Modifier
                         )
                         .offset(y = yOffsetDp)
@@ -137,25 +147,21 @@ fun CalendarMonthPage(
                         )
                         .padding(vertical = ROW_PADDING_DP.dp)
                         .then(
-                            if (isAbove || isBelow) Modifier.graphicsLayer {
-                                alpha = 1f - collapseProgress
-                            }
+                            if (rowAlpha < 1f) Modifier.graphicsLayer { alpha = rowAlpha }
                             else Modifier
                         )
                 ) {
-                    if (skipDayCells) {
-                        Spacer(Modifier.weight(1f))
-                    } else {
-                        week.forEach { dayData ->
-                            DayCell(
-                                date = dayData.date,
-                                isCurrentMonth = dayData.isCurrentMonth,
-                                isSelected = dayData.date == selectedDate,
-                                isToday = dayData.date == today,
-                                onClick = { onDateClick(dayData.date) },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+                    week.forEach { dayData ->
+                        DayCell(
+                            date = dayData.date,
+                            isCurrentMonth = dayData.isCurrentMonth,
+                            isSelected = dayData.date == selectedDate,
+                            isToday = dayData.date == today,
+                            shiftKind = shiftKindAt(dayData.date),
+                            showLegalHoliday = showLegalHoliday,
+                            onClick = { onDateClick(dayData.date) },
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
