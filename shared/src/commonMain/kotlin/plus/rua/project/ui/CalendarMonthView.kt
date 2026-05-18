@@ -233,14 +233,15 @@ fun CalendarMonthView(
                 dragRangeMinPx
             }
 
+            val monthProgress = 1f - viewModel.yearViewProgress
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
-                        val progress = if (viewModel.isYearView) viewModel.yearViewProgress else 1f - viewModel.yearViewProgress
-                        scaleX = lerp(0.3f, 1f, progress)
-                        scaleY = lerp(0.3f, 1f, progress)
-                        alpha = progress.coerceIn(0f, 1f)
+                        val scale = lerp(0.3f, 1f, monthProgress)
+                        scaleX = scale
+                        scaleY = scale
+                        alpha = monthProgress.coerceIn(0f, 1f)
                         transformOrigin = TransformOrigin(anchorPivotX, anchorPivotY)
                     }
             ) {
@@ -335,16 +336,16 @@ fun CalendarMonthView(
 
         // 年视图层：标题固定，HorizontalPager 只包裹网格。
         if (viewModel.isYearView) {
+            val yearProgress = viewModel.yearViewProgress
             composeTraceBeginSection("YearView:Compose")
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
-                        val progress = if (viewModel.isYearView) viewModel.yearViewProgress else 1f - viewModel.yearViewProgress
-                        val scale = lerp(3.3f, 1f, progress)
+                        val scale = lerp(3.3f, 1f, yearProgress)
                         scaleX = scale
                         scaleY = scale
-                        alpha = progress.coerceIn(0f, 1f)
+                        alpha = yearProgress.coerceIn(0f, 1f)
                         transformOrigin = TransformOrigin(anchorPivotX, anchorPivotY)
                     }
                     .padding(horizontal = HORIZONTAL_PADDING_DP.dp)
