@@ -62,7 +62,7 @@ fun CalendarMonthPage(
     }
     val density = LocalDensity.current
 
-    val weeks = days.chunked(7)
+    val weeks = remember(days) { days.chunked(7) }
     val anchorIndex = remember(weeks, selectedDate) {
         weeks.indexOfFirst { week -> week.any { it.date == selectedDate } }
     }
