@@ -18,7 +18,6 @@ class CalendarViewModelTest {
 
     private val fixedInstant = Instant.parse("2026-05-15T00:00:00Z")
     private val testClock = FixedClock(fixedInstant)
-
     private fun createViewModel(): CalendarViewModel {
         val scope = CoroutineScope(Dispatchers.Unconfined)
         return CalendarViewModel(coroutineScope = scope, clock = testClock)
