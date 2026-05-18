@@ -98,22 +98,38 @@ fun YearGridView(
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(horizontal = 4.dp),
-            verticalArrangement = Arrangement.SpaceEvenly
+            verticalArrangement = Arrangement.Top
         ) {
             (0 until 4).forEach { row ->
+                val verticalPadding = when (row) {
+                    0 -> Modifier.padding(top = 8.dp)
+                    3 -> Modifier.padding(bottom = 8.dp)
+                    else -> Modifier
+                }
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .then(verticalPadding),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     (0 until 3).forEach { col ->
                         val month = row * 3 + col + 1
+                        val horizontalPadding = when (col) {
+                            0 -> Modifier.padding(end = 4.dp)
+                            1 -> Modifier.padding(horizontal = 4.dp)
+                            2 -> Modifier.padding(start = 4.dp)
+                            else -> Modifier
+                        }
                         MiniMonth(
                             year = year,
                             month = month,
                             isSelected = month == selectedMonth,
                             today = today,
                             onClick = { onMonthClick(month) },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .weight(1f)
+                                .then(horizontalPadding)
                         )
                     }
                 }
@@ -156,7 +172,7 @@ private fun MiniMonth(
         Text(
             text = "${month}月",
             color = titleColor,
-            fontSize = 9.sp,
+            fontSize = 10.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             textAlign = TextAlign.Center
         )
@@ -169,7 +185,7 @@ private fun MiniMonth(
                 Text(
                     text = label,
                     color = weekdayColor,
-                    fontSize = 6.sp,
+                    fontSize = 8.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f)
                 )
@@ -178,7 +194,9 @@ private fun MiniMonth(
         // 日期网格
         days.chunked(7).forEach { week ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 week.forEach { dayData ->
@@ -208,9 +226,9 @@ private fun MiniMonth(
                         Text(
                             text = if (dayData.isCurrentMonth) dayData.date.day.toString() else "",
                             color = color,
-                            fontSize = 6.sp,
+                            fontSize = 8.sp,
                             textAlign = TextAlign.Center,
-                            lineHeight = 9.sp
+                            lineHeight = 12.sp
                         )
                     }
                 }
