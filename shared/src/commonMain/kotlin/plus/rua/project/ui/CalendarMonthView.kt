@@ -138,14 +138,12 @@ fun CalendarMonthView(
 
     val collapseProgress = viewModel.collapseProgress
     val headerHeightPx = monthHeaderHeightPx + weekdayHeaderHeightPx
-    val rowPaddingPx = with(density) { ROW_PADDING_DP.dp.toPx() }.toInt()
-    val cardGapPx = with(density) {
-        lerp(
-            CARD_GAP_EXPANDED_DP.toFloat(),
-            CARD_GAP_COLLAPSED_DP.toFloat(),
-            collapseProgress
-        ).dp.toPx()
-    }.toInt()
+
+    // 预计算固定 dp→px，避免每帧重复 density 转换
+    val cardGapExpandedPx = remember { with(density) { CARD_GAP_EXPANDED_DP.dp.toPx() } }
+    val cardGapCollapsedPx = remember { with(density) { CARD_GAP_COLLAPSED_DP.dp.toPx() } }
+    val rowPaddingPx = remember { with(density) { ROW_PADDING_DP.dp.toPx() } }.toInt()
+    val cardGapPx = lerp(cardGapExpandedPx, cardGapCollapsedPx, collapseProgress).toInt()
 
     val interpolatedWeeks by remember {
         derivedStateOf {
@@ -162,11 +160,13 @@ fun CalendarMonthView(
         }
     }
 
+    // 预计算固定 dp→px，避免每帧重复 density 转换
+    val horizontalPaddingPx = remember { with(density) { (HORIZONTAL_PADDING_DP * 2).dp.toPx() } }
+    val rowPadding2Px = remember { with(density) { (ROW_PADDING_DP * 2).dp.toPx() } }
+
     val estimatedRowHeightPx = if (screenWidthPx > 0) {
-        val cellWidth =
-            (screenWidthPx - with(density) { (HORIZONTAL_PADDING_DP * 2).dp.toPx() }) / 7
-        val rowPadding = with(density) { (ROW_PADDING_DP * 2).dp.toPx() }
-        (cellWidth + rowPadding).toInt()
+        val cellWidth = (screenWidthPx - horizontalPaddingPx) / 7
+        (cellWidth + rowPadding2Px).toInt()
     } else 0
 
     val effectiveRowHeightPx = if (rowHeightPx > 0) rowHeightPx else estimatedRowHeightPx
