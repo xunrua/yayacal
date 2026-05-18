@@ -246,10 +246,10 @@ fun YearHeader(
                 transitionSpec = {
                     if (targetState > initialState) {
                         slideInVertically(tween(250)) { -it } togetherWith
-                            slideOutVertically(tween(250)) { it }
+                                slideOutVertically(tween(250)) { it }
                     } else {
                         slideInVertically(tween(250)) { it } togetherWith
-                            slideOutVertically(tween(250)) { -it }
+                                slideOutVertically(tween(250)) { -it }
                     }
                 }
             ) { y ->
