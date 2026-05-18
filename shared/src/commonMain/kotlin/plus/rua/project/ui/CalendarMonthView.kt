@@ -233,6 +233,9 @@ fun CalendarMonthView(
             }
 
             val monthProgress = 1f - viewModel.yearViewProgress
+            // 组合阶段计算：lambda 捕获快照值，避免 draw 阶段读到已更新的 rowHeightPx
+            // 但 layout 仍用旧值导致行堆叠
+            val layoutReady = rowHeightPx > 0
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -240,7 +243,7 @@ fun CalendarMonthView(
                         val scale = lerp(0.3f, 1f, monthProgress)
                         scaleX = scale
                         scaleY = scale
-                        alpha = monthProgress.coerceIn(0f, 1f)
+                        alpha = if (layoutReady) monthProgress.coerceIn(0f, 1f) else 0f
                         transformOrigin = TransformOrigin(anchorPivotX, anchorPivotY)
                     }
             ) {
