@@ -132,7 +132,7 @@ fun CalendarMonthView(
             today.year, today.month.number
         )
         if (targetPage != pagerState.currentPage) {
-            pagerState.scrollToPage(targetPage)
+            pagerState.animateScrollToPage(targetPage)
         }
     }
 
@@ -239,14 +239,6 @@ fun CalendarMonthView(
                         showToday = viewModel.selectedDate != today,
                         onToday = {
                             viewModel.selectDate(today)
-                            @Suppress("DEPRECATION") // monthNumber 无替代 API
-                            val targetPage = yearMonthToPage(
-                                today.year, today.month.number,
-                                today.year, today.month.number
-                            )
-                            if (targetPage != pagerState.currentPage) {
-                                coroutineScope.launch { pagerState.animateScrollToPage(targetPage) }
-                            }
                         },
                         modifier = Modifier.onSizeChanged { size ->
                             monthHeaderHeightPx = size.height
