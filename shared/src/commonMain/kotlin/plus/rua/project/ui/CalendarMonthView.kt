@@ -7,6 +7,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -16,11 +17,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.foundation.pager.HorizontalPager
@@ -39,6 +42,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -370,6 +374,23 @@ fun CalendarMonthView(
             }
         }
 
+        // FAB 浮动按钮
+        if (cardHeightPx > 0) {
+            FloatingActionButton(
+                onClick = { isMenuExpanded = !isMenuExpanded },
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(
+                        start = 16.dp,
+                        bottom = with(density) { cardHeightPx.toDp() } + 16.dp
+                    ),
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ) {
+                MenuIcon()
+            }
+        }
+
         // Scrim：菜单展开时覆盖全屏，点击关闭
         AnimatedVisibility(
             visible = isMenuExpanded,
@@ -430,6 +451,24 @@ fun CalendarMonthView(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun MenuIcon(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(24.dp)) {
+        val strokeWidth = 2.dp.toPx()
+        val lineSpacing = 4.dp.toPx()
+        val totalHeight = strokeWidth * 3 + lineSpacing * 2
+        val startY = (size.height - totalHeight) / 2
+        repeat(3) { i ->
+            drawLine(
+                color = Color.White,
+                start = Offset(0f, startY + i * (strokeWidth + lineSpacing)),
+                end = Offset(size.width, startY + i * (strokeWidth + lineSpacing)),
+                strokeWidth = strokeWidth
+            )
         }
     }
 }
