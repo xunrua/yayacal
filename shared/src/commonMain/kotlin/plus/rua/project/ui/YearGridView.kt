@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -21,10 +23,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.datetime.DatePeriod
@@ -32,6 +38,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
+import plus.rua.project.composeTraceBeginSection
+import plus.rua.project.composeTraceEndSection
 
 private val WEEKDAY_LABELS = listOf("一", "二", "三", "四", "五", "六", "日")
 
@@ -52,6 +60,7 @@ fun YearGridView(
     onMonthClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    composeTraceBeginSection("YearGridView:$year")
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -84,6 +93,7 @@ fun YearGridView(
             }
         }
     }
+    composeTraceEndSection()
 }
 
 /**
@@ -107,7 +117,13 @@ private fun MiniMonth(
     val weekdayColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
     val dayColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
     val otherMonthColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-    val todayBgColor = MaterialTheme.colorScheme.primary
+    val todayBgColor = MaterialTheme.colorScheme.primaryContainer
+    val todayTextColor = MaterialTheme.colorScheme.onPrimaryContainer
+
+    val textMeasurer = rememberTextMeasurer()
+    val dayTextStyle = remember {
+        TextStyle(fontSize = 8.sp, lineHeight = 12.sp)
+    }
 
     Column(
         modifier = modifier
@@ -139,46 +155,49 @@ private fun MiniMonth(
                 )
             }
         }
-        // 日期网格
-        days.chunked(7).forEach { week ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 2.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                week.forEach { dayData ->
-                    val isToday = dayData.date == today && dayData.isCurrentMonth
-                    val color = when {
-                        !dayData.isCurrentMonth -> otherMonthColor
-                        isToday -> MaterialTheme.colorScheme.onPrimary
-                        else -> dayColor
-                    }
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        if (isToday) {
-                            Box(
-                                modifier = Modifier
-                                    .drawBehind {
-                                        drawCircle(
-                                            color = todayBgColor,
-                                            radius = size.minDimension / 2f,
-                                            center = Offset(size.width / 2f, size.height / 2f)
-                                        )
-                                    }
-                                    .clip(CircleShape)
-                            )
-                        }
-                        Text(
-                            text = if (dayData.isCurrentMonth) dayData.date.day.toString() else "",
-                            color = color,
-                            fontSize = 8.sp,
-                            textAlign = TextAlign.Center,
-                            lineHeight = 12.sp
+        // 日期网格 — Canvas 绘制
+        val density = LocalDensity.current
+        val dayRowCount = days.size / 7
+        val canvasHeight = with(density) { (dayRowCount * (12.sp.toPx() + 4.dp.toPx())).toDp() }
+        Canvas(modifier = Modifier.fillMaxWidth().height(canvasHeight)) {
+            val cellWidth = size.width / 7f
+            val rowHeightPx = size.height / dayRowCount
+
+            days.forEachIndexed { index, dayData ->
+                val row = index / 7
+                val col = index % 7
+                val centerX = col * cellWidth + cellWidth / 2f
+                val centerY = row * rowHeightPx + rowHeightPx / 2f
+
+                val isToday = dayData.date == today && dayData.isCurrentMonth
+                val text = if (dayData.isCurrentMonth) dayData.date.day.toString() else ""
+                val textColor: Color = when {
+                    !dayData.isCurrentMonth -> otherMonthColor
+                    isToday -> todayTextColor
+                    else -> dayColor
+                }
+
+                if (isToday) {
+                    val radius = cellWidth.coerceAtMost(rowHeightPx) / 2f * 0.8f
+                    drawCircle(
+                        color = todayBgColor,
+                        radius = radius,
+                        center = Offset(centerX, centerY)
+                    )
+                }
+
+                if (text.isNotEmpty()) {
+                    val measured = textMeasurer.measure(
+                        text = text,
+                        style = dayTextStyle.copy(color = textColor)
+                    )
+                    drawText(
+                        textLayoutResult = measured,
+                        topLeft = Offset(
+                            x = centerX - measured.size.width / 2f,
+                            y = centerY - measured.size.height / 2f
                         )
-                    }
+                    )
                 }
             }
         }
@@ -192,6 +211,7 @@ private data class MiniDayData(
 
 @Suppress("DEPRECATION") // monthNumber 无替代 API
 private fun generateMiniMonthDays(year: Int, month: Int): List<MiniDayData> {
+    composeTraceBeginSection("generateMiniMonthDays:$year-$month")
     val firstOfMonth = LocalDate(year, month, 1)
     val offset = firstOfMonth.dayOfWeek.ordinal
     val startDate = firstOfMonth.minus(DatePeriod(days = offset))
@@ -200,13 +220,15 @@ private fun generateMiniMonthDays(year: Int, month: Int): List<MiniDayData> {
     val rows = ((offset + daysInMonth - 1) / 7) + 1
     val totalDays = rows * 7
 
-    return (0 until totalDays).map { i ->
+    val result = (0 until totalDays).map { i ->
         val date = startDate.plus(DatePeriod(days = i))
         MiniDayData(
             date = date,
             isCurrentMonth = date.month.number == month && date.year == year
         )
     }
+    composeTraceEndSection()
+    return result
 }
 
 /**

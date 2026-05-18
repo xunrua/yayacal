@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -59,6 +60,8 @@ import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import plus.rua.project.CalendarViewModel
+import plus.rua.project.composeTraceBeginSection
+import plus.rua.project.composeTraceEndSection
 import kotlin.math.abs
 import kotlin.time.Clock
 
@@ -90,10 +93,21 @@ fun CalendarMonthView(
     var screenHeightPx by remember { mutableIntStateOf(0) }
     var calendarContentHeightPx by remember { mutableIntStateOf(0) }
     var isMenuExpanded by remember { mutableStateOf(false) }
+    var yearPagerBeyondViewport by remember { mutableStateOf(0) }
 
     // 视图切换时自动关闭菜单
     LaunchedEffect(viewModel.isYearView) {
         isMenuExpanded = false
+    }
+
+    // 年视图首帧后恢复预组合，避免首帧同时组合 3 页 × 12 月 = 36 个 MiniMonth
+    LaunchedEffect(viewModel.isYearView) {
+        if (viewModel.isYearView) {
+            withFrameNanos { }
+            yearPagerBeyondViewport = 1
+        } else {
+            yearPagerBeyondViewport = 0
+        }
     }
 
     val pagerState = rememberPagerState(initialPage = START_PAGE, pageCount = { Int.MAX_VALUE })
@@ -209,6 +223,7 @@ fun CalendarMonthView(
     ) {
         // 月视图层：仅在非年视图时渲染，年视图激活时立即移除。
         if (!viewModel.isYearView) {
+            composeTraceBeginSection("MonthView:Compose")
             val dragRangeMinPx = with(density) { DRAG_RANGE_MIN_DP.dp.toPx() }
             val dragRangePx = if (effectiveRowHeightPx > 0) {
                 maxOf((effectiveWeeks - 1) * effectiveRowHeightPx.toFloat(), dragRangeMinPx)
@@ -313,10 +328,12 @@ fun CalendarMonthView(
                     )
                 }
             }
+            composeTraceEndSection()
         }
 
         // 年视图层：标题固定，HorizontalPager 只包裹网格。
         if (viewModel.isYearView) {
+            composeTraceBeginSection("YearView:Compose")
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -342,7 +359,7 @@ fun CalendarMonthView(
                 )
                 HorizontalPager(
                     state = yearPagerState,
-                    beyondViewportPageCount = 1,
+                    beyondViewportPageCount = yearPagerBeyondViewport,
                     flingBehavior = PagerDefaults.flingBehavior(state = yearPagerState),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -375,6 +392,7 @@ fun CalendarMonthView(
                     )
                 }
             }
+            composeTraceEndSection()
         }
 
         // FAB 浮动按钮

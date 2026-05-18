@@ -116,21 +116,32 @@ class CalendarViewModel(
         yearViewJob?.cancel()
         yearViewJob = coroutineScope.launch {
             if (isYearView) {
-                // 年 → 月：先切换状态让月视图开始合成，再等一帧避免首帧抖动
+                // 年 → 月：先启动动画（年视图开始淡出），等一帧后翻转 isYearView（月视图开始组合）
+                composeTraceBeginSection("YearView→MonthView")
+                _yearViewAnimatable.snapTo(1f)
+                val animJob = launch {
+                    _yearViewAnimatable.animateTo(
+                        0f, tween(400, easing = FastOutSlowInEasing)
+                    )
+                }
+                withFrameNanos { }
                 isYearView = false
-                withFrameNanos { }
-                _yearViewAnimatable.animateTo(
-                    0f, tween(400, easing = FastOutSlowInEasing)
-                )
+                animJob.join()
+                composeTraceEndSection()
             } else {
-                // 月 → 年：先切换状态让年视图开始合成
+                // 月 → 年：先启动动画（月视图开始缩小），等一帧后翻转 isYearView（年视图开始组合）
+                composeTraceBeginSection("MonthView→YearView")
                 yearViewYear = selectedDate.year
-                isYearView = true
                 _yearViewAnimatable.snapTo(0f)
+                val animJob = launch {
+                    _yearViewAnimatable.animateTo(
+                        1f, tween(400, easing = FastOutSlowInEasing)
+                    )
+                }
                 withFrameNanos { }
-                _yearViewAnimatable.animateTo(
-                    1f, tween(400, easing = FastOutSlowInEasing)
-                )
+                isYearView = true
+                animJob.join()
+                composeTraceEndSection()
             }
         }
     }
@@ -140,6 +151,7 @@ class CalendarViewModel(
      */
     @Suppress("DEPRECATION") // monthNumber 无替代 API
     fun selectMonthFromYearView(month: Int) {
+        composeTraceBeginSection("YearView:SelectMonth")
         val date = if (yearViewYear == today.year && today.month.number == month) today
         else LocalDate(yearViewYear, month, 1)
         selectedDate = date
@@ -150,6 +162,7 @@ class CalendarViewModel(
             _yearViewAnimatable.animateTo(
                 0f, tween(400, easing = FastOutSlowInEasing)
             )
+            composeTraceEndSection()
         }
     }
 
@@ -286,6 +299,7 @@ class CalendarViewModel(
      */
     @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     fun getMonthDays(year: Int, month: Int): List<CalendarDay> {
+        composeTraceBeginSection("getMonthDays:$year-$month")
         val firstOfMonth = LocalDate(year, month, 1)
         val dayOfWeekOffset = firstOfMonth.dayOfWeek.ordinal
         val startDate = firstOfMonth.minus(DatePeriod(days = dayOfWeekOffset))
@@ -295,7 +309,7 @@ class CalendarViewModel(
         val rows = ((dayOfWeekOffset + daysInMonth - 1) / 7) + 1
         val totalDays = rows * 7
 
-        return (0 until totalDays).map { i ->
+        val result = (0 until totalDays).map { i ->
             val date = startDate.plus(DatePeriod(days = i))
             CalendarDay(
                 date = date,
@@ -304,5 +318,7 @@ class CalendarViewModel(
                 isSelected = date == selectedDate
             )
         }
+        composeTraceEndSection()
+        return result
     }
 }
