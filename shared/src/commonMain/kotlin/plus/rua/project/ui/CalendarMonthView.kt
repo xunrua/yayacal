@@ -89,7 +89,7 @@ fun CalendarMonthView(
 
     @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     val currentMonth by remember { derivedStateOf { viewModel.selectedDate.month.number } }
-    val density = LocalDensity.current
+    LocalDensity.current
 
     var rowHeightPx by remember { mutableIntStateOf(0) }
     var screenWidthPx by remember { mutableIntStateOf(0) }
@@ -448,6 +448,7 @@ private fun CalendarPagerArea(
                             weekMonday
                         }
                     }
+
                     else -> weekMonday
                 }
                 viewModel.selectDate(date)
