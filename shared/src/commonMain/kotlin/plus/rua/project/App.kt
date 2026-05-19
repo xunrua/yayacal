@@ -38,7 +38,7 @@ private fun GraphicsLayerScope.applyDismissTransform(progress: Float) {
     translationX = progress * size.width * 0.5f
     scaleX = 1f - progress * 0.08f
     scaleY = 1f - progress * 0.08f
-    alpha = 1f - progress * 0.8f
+    alpha = 1f - progress
     shadowElevation = 32.dp.toPx() * progress
     shape = RoundedCornerShape(28.dp * progress)
     clip = progress > 0.01f
