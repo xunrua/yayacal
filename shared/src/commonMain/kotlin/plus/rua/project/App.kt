@@ -1,6 +1,13 @@
 package plus.rua.project
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -27,23 +34,39 @@ fun App() {
 
     val colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()
     MaterialTheme(colorScheme = colorScheme) {
-        when (currentScreen) {
-            Screen.Main -> CalendarMonthView(
-                modifier = Modifier,
-                onNavigateToAbout = { currentScreen = Screen.About }
-            )
-            Screen.About -> {
-                BackHandler { currentScreen = Screen.Main }
-                AboutScreen(
-                    onBack = { currentScreen = Screen.Main },
-                    onNavigateToLicenses = { currentScreen = Screen.Licenses }
+        AnimatedContent(
+            targetState = currentScreen,
+            transitionSpec = {
+                if (targetState.ordinal > initialState.ordinal) {
+                    // 向前导航：新页面从右侧滑入覆盖，旧页面略微左移+淡出
+                    (slideInHorizontally { it } + fadeIn()) togetherWith
+                        (slideOutHorizontally { -it / 4 } + fadeOut())
+                } else {
+                    // 向后导航：新页面从左侧滑入，旧页面略微右移+淡出
+                    (slideInHorizontally { -it } + fadeIn()) togetherWith
+                        (slideOutHorizontally { it / 4 } + fadeOut())
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        ) { screen ->
+            when (screen) {
+                Screen.Main -> CalendarMonthView(
+                    modifier = Modifier,
+                    onNavigateToAbout = { currentScreen = Screen.About }
                 )
-            }
-            Screen.Licenses -> {
-                BackHandler { currentScreen = Screen.About }
-                LicensesScreen(
-                    onBack = { currentScreen = Screen.About }
-                )
+                Screen.About -> {
+                    BackHandler { currentScreen = Screen.Main }
+                    AboutScreen(
+                        onBack = { currentScreen = Screen.Main },
+                        onNavigateToLicenses = { currentScreen = Screen.Licenses }
+                    )
+                }
+                Screen.Licenses -> {
+                    BackHandler { currentScreen = Screen.About }
+                    LicensesScreen(
+                        onBack = { currentScreen = Screen.About }
+                    )
+                }
             }
         }
     }
