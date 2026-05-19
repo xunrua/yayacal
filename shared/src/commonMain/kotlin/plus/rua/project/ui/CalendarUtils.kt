@@ -10,7 +10,7 @@ import kotlinx.datetime.plus
 const val START_PAGE = Int.MAX_VALUE / 2
 
 /** 折叠判定阈值：折叠时 progress > 此值触发，展开时 progress < (1-此值) 触发 */
-const val COLLAPSE_THRESHOLD = 0.25f
+const val COLLAPSE_THRESHOLD = 0.08f
 
 /** 滑动偏移插值阈值：abs(offsetFraction) > 此值时启用插值 */
 const val OFFSET_FRACTION_THRESHOLD = 0.01f
