@@ -1,9 +1,12 @@
 package plus.rua.project
 
 import android.os.Build
+import androidx.activity.BackEventCompat
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 
 class AndroidPlatform : Platform {
     override val name: String = "Android ${Build.VERSION.SDK_INT}"
@@ -22,19 +25,20 @@ actual fun PredictiveBackHandler(
     onBack: () -> Unit,
     onCancel: () -> Unit
 ) {
-    if (Build.VERSION.SDK_INT >= 34) {
-        rememberCoroutineScope()
-        androidx.activity.compose.PredictiveBackHandler(enabled) { progress ->
-            try {
-                progress.collect { backEvent ->
-                    onProgress(backEvent.progress)
-                }
-                onBack()
-            } catch (e: CancellationException) {
-                onCancel()
+    // 官方 PredictiveBackHandler — Flow 模式：collect 完成=返回，CancellationException=取消
+    PredictiveBackHandler(enabled = enabled) { progress: Flow<BackEventCompat> ->
+        try {
+            progress.collect { event ->
+                onProgress(event.progress)
             }
+            onBack()
+        } catch (e: CancellationException) {
+            onCancel()
         }
-    } else {
-        androidx.activity.compose.BackHandler(enabled = enabled, onBack = onBack)
+    }
+
+    // 降级：部分设备（如 OPPO/ColorOS）不通过 OnBackInvokedCallback 分发返回事件
+    BackHandler(enabled = enabled) {
+        onBack()
     }
 }
