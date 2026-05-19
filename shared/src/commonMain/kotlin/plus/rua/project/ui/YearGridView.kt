@@ -193,10 +193,11 @@ private fun MiniMonth(
     val density = LocalDensity.current
     val dayRowCount = days.size / 7
     val titleHeightPx = with(density) { 14.sp.toPx() }
+    val titleToWeekdayGapPx = with(density) { 4.dp.toPx() }
     val weekdayHeightPx = with(density) { 12.sp.toPx() }
     val dayCellHeightPx = with(density) { (12.sp.toPx() + 4.dp.toPx()) }
     val totalHeight = with(density) {
-        (titleHeightPx + weekdayHeightPx + dayRowCount * dayCellHeightPx).toDp()
+        (titleHeightPx + titleToWeekdayGapPx + weekdayHeightPx + dayRowCount * dayCellHeightPx).toDp()
     }
 
     Column(
@@ -220,7 +221,7 @@ private fun MiniMonth(
             )
 
             // 2. 绘制星期行
-            val weekdayY = titleHeightPx
+            val weekdayY = titleHeightPx + titleToWeekdayGapPx
             WEEKDAY_LABELS.forEachIndexed { i, label ->
                 val layout = weekdayLayouts[label]!!
                 drawText(
@@ -233,7 +234,7 @@ private fun MiniMonth(
             }
 
             // 3. 绘制日期网格
-            val dayGridY = titleHeightPx + weekdayHeightPx
+            val dayGridY = weekdayY + weekdayHeightPx
 
             days.forEachIndexed { index, dayData ->
                 val row = index / 7
