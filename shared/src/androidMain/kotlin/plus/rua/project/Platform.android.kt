@@ -1,8 +1,6 @@
 package plus.rua.project
 
-import android.os.Build
 import androidx.activity.BackEventCompat
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.CancellationException
@@ -25,7 +23,6 @@ actual fun PredictiveBackHandler(
     onBack: () -> Unit,
     onCancel: () -> Unit
 ) {
-    // 官方 PredictiveBackHandler — Flow 模式：collect 完成=返回，CancellationException=取消
     PredictiveBackHandler(enabled = enabled) { progress: Flow<BackEventCompat> ->
         try {
             progress.collect { event ->
@@ -35,10 +32,5 @@ actual fun PredictiveBackHandler(
         } catch (e: CancellationException) {
             onCancel()
         }
-    }
-
-    // 降级：部分设备（如 OPPO/ColorOS）不通过 OnBackInvokedCallback 分发返回事件
-    BackHandler(enabled = enabled) {
-        onBack()
     }
 }
