@@ -128,8 +128,8 @@ fun YearGridView(
 
     // P0-H: 预测量星期标签
     val weekdayLayouts = remember(textMeasurer, colors) {
-        WEEKDAY_LABELS.associate { label ->
-            label to textMeasurer.measure(label, TextStyle(fontSize = 8.sp, color = colors.weekday))
+        WEEKDAY_LABELS.associateWith { label ->
+            textMeasurer.measure(label, TextStyle(fontSize = 8.sp, color = colors.weekday))
         }
     }
 
