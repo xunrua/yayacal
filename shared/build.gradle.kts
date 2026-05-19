@@ -49,7 +49,6 @@ kotlin {
             implementation(libs.sketch.compose)
             implementation(libs.sketch.animated.gif)
             implementation(libs.sketch.compose.resources)
-            implementation(libs.navigationevent.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

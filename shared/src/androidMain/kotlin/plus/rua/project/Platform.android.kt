@@ -1,13 +1,12 @@
 package plus.rua.project
 
 import android.os.Build
+import androidx.activity.BackEventCompat
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.navigationevent.NavigationEventInfo
-import androidx.navigationevent.NavigationEventTransitionState
-import androidx.navigationevent.compose.NavigationBackHandler
-import androidx.navigationevent.compose.rememberNavigationEventState
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 
 class AndroidPlatform : Platform {
     override val name: String = "Android ${Build.VERSION.SDK_INT}"
@@ -26,19 +25,15 @@ actual fun PredictiveBackHandler(
     onBack: () -> Unit,
     onCancel: () -> Unit
 ) {
-    val navState = rememberNavigationEventState(NavigationEventInfo.None)
-
-    NavigationBackHandler(
-        state = navState,
-        isBackEnabled = enabled,
-        onBackCancelled = onCancel,
-        onBackCompleted = onBack
-    )
-
-    LaunchedEffect(navState.transitionState) {
-        val ts = navState.transitionState
-        if (ts is NavigationEventTransitionState.InProgress) {
-            onProgress(ts.latestEvent.progress)
+    // 官方 PredictiveBackHandler — Flow 模式：collect 完成=返回，CancellationException=取消
+    PredictiveBackHandler(enabled = enabled) { progress: Flow<BackEventCompat> ->
+        try {
+            progress.collect { event ->
+                onProgress(event.progress)
+            }
+            onBack()
+        } catch (e: CancellationException) {
+            onCancel()
         }
     }
 
