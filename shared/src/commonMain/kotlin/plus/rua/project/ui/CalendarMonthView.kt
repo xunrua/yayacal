@@ -78,7 +78,8 @@ import kotlin.time.Clock
  */
 @Composable
 fun CalendarMonthView(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToAbout: () -> Unit = {}
 ) {
     val coroutineScope = rememberCoroutineScope()
     val viewModel = remember { CalendarViewModel(coroutineScope) }
@@ -468,7 +469,10 @@ fun CalendarMonthView(
                     MenuItem(
                         text = "关于",
                         selected = false,
-                        onClick = { /* TODO: 后续接入设置页 */ }
+                        onClick = {
+                            isMenuExpanded = false
+                            onNavigateToAbout()
+                        }
                     )
                 }
             }

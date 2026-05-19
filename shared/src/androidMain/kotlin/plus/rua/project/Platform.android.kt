@@ -9,3 +9,5 @@ class AndroidPlatform : Platform {
 actual fun getPlatform(): Platform = AndroidPlatform()
 
 actual fun getGifUri(gifFile: String): String = "file:///android_asset/gifs/$gifFile"
+
+actual fun getAppIconUri(): String = "file:///android_asset/app_icon.png"

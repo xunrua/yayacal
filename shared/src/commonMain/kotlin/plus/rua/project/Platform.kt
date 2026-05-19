@@ -13,3 +13,5 @@ expect fun getPlatform(): Platform
  * @return 平台特定的资源 URI
  */
 expect fun getGifUri(gifFile: String): String
+
+expect fun getAppIconUri(): String
