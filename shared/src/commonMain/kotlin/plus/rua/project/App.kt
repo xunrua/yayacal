@@ -32,13 +32,19 @@ fun App() {
                 modifier = Modifier,
                 onNavigateToAbout = { currentScreen = Screen.About }
             )
-            Screen.About -> AboutScreen(
-                onBack = { currentScreen = Screen.Main },
-                onNavigateToLicenses = { currentScreen = Screen.Licenses }
-            )
-            Screen.Licenses -> LicensesScreen(
-                onBack = { currentScreen = Screen.About }
-            )
+            Screen.About -> {
+                BackHandler { currentScreen = Screen.Main }
+                AboutScreen(
+                    onBack = { currentScreen = Screen.Main },
+                    onNavigateToLicenses = { currentScreen = Screen.Licenses }
+                )
+            }
+            Screen.Licenses -> {
+                BackHandler { currentScreen = Screen.About }
+                LicensesScreen(
+                    onBack = { currentScreen = Screen.About }
+                )
+            }
         }
     }
 }

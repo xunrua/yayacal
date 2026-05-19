@@ -1,5 +1,7 @@
 package plus.rua.project
 
+import androidx.compose.runtime.Composable
+
 interface Platform {
     val name: String
 }
@@ -15,3 +17,12 @@ expect fun getPlatform(): Platform
 expect fun getGifUri(gifFile: String): String
 
 expect fun getAppIconUri(): String
+
+/**
+ * 拦截系统返回手势。
+ *
+ * @param enabled 是否启用拦截
+ * @param onBack 返回回调
+ */
+@Composable
+expect fun BackHandler(enabled: Boolean = true, onBack: () -> Unit)
