@@ -1,6 +1,7 @@
 package plus.rua.project.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -8,23 +9,25 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -32,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tyme.lunar.LunarYear
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
@@ -303,37 +307,28 @@ private fun generateMiniMonthDays(year: Int, month: Int): List<MiniDayData> {
 }
 
 /**
- * 年视图标题栏，显示年份文字和左右导航箭头。
+ * 年视图标题栏，左侧显示年份文字与农历干支年，右侧在非今年时显示「今年」按钮。
  *
- * 年份切换时文字有垂直滑动过渡动画，方向由新旧年份大小决定。
+ * 年份切换时年份与农历年文字均有垂直滑动过渡动画。
  *
  * @param year 当前年份
+ * @param currentYear 今年年份
  * @param onYearChange 年份切换回调
  * @param modifier 外部布局修饰符
  */
 @Composable
 fun YearHeader(
     year: Int,
+    currentYear: Int,
     onYearChange: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(vertical = 8.dp, horizontal = 12.dp)
     ) {
-        Text(
-            text = "‹",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .clip(CircleShape)
-                .clickable { onYearChange(year - 1) }
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        )
-        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             AnimatedContent(
                 targetState = year,
                 transitionSpec = {
@@ -353,16 +348,51 @@ fun YearHeader(
                     fontWeight = FontWeight.Bold
                 )
             }
+            Spacer(modifier = Modifier.weight(1f))
+            val showThisYear = year != currentYear
+            val thisYearAlpha by animateFloatAsState(
+                targetValue = if (showThisYear) 1f else 0f,
+                animationSpec = tween(200)
+            )
+            Text(
+                text = "今年",
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 14.sp,
+                modifier = Modifier
+                    .graphicsLayer { alpha = thisYearAlpha }
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(enabled = showThisYear) { onYearChange(currentYear) }
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            )
         }
-        Text(
-            text = "›",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .clip(CircleShape)
-                .clickable { onYearChange(year + 1) }
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        )
+        AnimatedContent(
+            targetState = year,
+            transitionSpec = {
+                if (targetState > initialState) {
+                    slideInVertically(tween(250)) { -it } togetherWith
+                            slideOutVertically(tween(250)) { it }
+                } else {
+                    slideInVertically(tween(250)) { it } togetherWith
+                            slideOutVertically(tween(250)) { -it }
+                }
+            },
+            modifier = Modifier.padding(top = 4.dp)
+        ) { y ->
+            Text(
+                text = lunarYearLabel(y),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
     }
+}
+
+/**
+ * 返回类似「丙午马年」的农历干支生肖年标签。
+ */
+private fun lunarYearLabel(year: Int): String {
+    val sixtyCycle = LunarYear.fromYear(year).getSixtyCycle()
+    val ganZhi = sixtyCycle.getName()
+    val zodiac = sixtyCycle.getEarthBranch().getZodiac().getName()
+    return "${ganZhi}${zodiac}年"
 }

@@ -5,5 +5,4 @@ package plus.rua.project
  */
 object AppInfo {
     const val NAME = "鸭鸭日历"
-    const val VERSION = "1.0"
 }

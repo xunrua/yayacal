@@ -225,6 +225,7 @@ fun CalendarMonthView(
             ) {
                 YearHeader(
                     year = viewModel.yearViewYear,
+                    currentYear = today.year,
                     onYearChange = { newYear ->
                         val offset = newYear - viewModel.yearViewYear
                         val targetPage = yearPagerState.currentPage + offset
