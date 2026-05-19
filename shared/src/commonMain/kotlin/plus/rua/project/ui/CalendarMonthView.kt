@@ -203,6 +203,7 @@ fun CalendarMonthView(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .onSizeChanged { size ->
                 screenWidthPx = size.width
