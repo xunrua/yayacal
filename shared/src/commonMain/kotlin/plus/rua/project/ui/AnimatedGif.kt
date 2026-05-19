@@ -16,7 +16,7 @@ import plus.rua.project.getGifUri
 /**
  * GIF 文件名列表（001.gif ~ 152.gif）。
  */
-private val GIF_FILES = (1..152).map { String.format("%03d.gif", it) }
+private val GIF_FILES = (1..152).map { "${it.toString().padStart(3, '0')}.gif" }
 
 /**
  * 显示动画 GIF 图片，切换日期时随机选择一个。
