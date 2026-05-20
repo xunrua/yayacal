@@ -1,14 +1,19 @@
 package plus.rua.project.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -50,7 +55,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -70,13 +74,14 @@ import kotlin.math.abs
 import kotlin.time.Clock
 
 /**
- * 日历主界面，包含月/周视图切换、折叠动画和年视图缩放转场。
+ * 日历主界面，包含月/周视图切换、折叠动画和年视图共享元素转场。
  *
  * 折叠时日历从月视图收缩为周视图（1行），BottomCard 同步上移填充空间。
- * 通过左下角 FAB 菜单切换月/年视图，以当前月为锚点缩放转场。
+ * 通过左下角 FAB 菜单切换月/年视图，使用 SharedTransitionLayout 实现共享元素转场。
  *
  * @param modifier 外部布局修饰符
  */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun CalendarMonthView(
     modifier: Modifier = Modifier,
@@ -139,140 +144,145 @@ fun CalendarMonthView(
         }
     }
 
-    // 年视图锚点缩放：当前月在 4×3 网格中的归一化位置
-    val anchorPivotX = ((currentMonth - 1) % 3 + 0.5f) / 3f
-    val anchorPivotY = ((currentMonth - 1) / 3 + 0.5f) / 4f
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-            .onSizeChanged { size ->
-                screenWidthPx = size.width
-            }
-    ) {
-        // 月视图层：仅在非年视图时渲染，年视图激活时立即移除。
-        if (!viewModel.isYearView) {
-            composeTraceBeginSection("MonthView:Compose")
-            val layoutReady = rowHeightPx > 0
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        val monthProgress = 1f - viewModel.yearViewProgress
-                        val scale = lerp(0.3f, 1f, monthProgress)
-                        scaleX = scale
-                        scaleY = scale
-                        alpha = if (layoutReady) monthProgress.coerceIn(0f, 1f) else 0f
-                        transformOrigin = TransformOrigin(anchorPivotX, anchorPivotY)
-                    }
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = HORIZONTAL_PADDING_DP.dp)
-                ) {
-                    MonthHeader(
-                        year = currentYear,
-                        month = currentMonth,
-                        weekNumber = viewModel.getIsoWeekNumber(viewModel.selectedDate),
-                        showToday = viewModel.selectedDate != today,
-                        onToday = {
-                            viewModel.selectDate(today)
-                        }
-                    )
-                    WeekdayHeader(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = ROW_PADDING_DP.dp)
-                    )
-                    CalendarPagerArea(
-                        viewModel = viewModel,
-                        today = today,
-                        rowHeightPx = rowHeightPx,
-                        screenWidthPx = screenWidthPx,
-                        onRowHeightMeasured = { h ->
-                            if (h > 0) rowHeightPx = h
-                        },
-                        pagerState = pagerState,
-                        modifier = Modifier.clipToBounds()
-                    )
-                    BottomCardArea(
-                        viewModel = viewModel,
-                        today = today,
-                        rowHeightPx = rowHeightPx,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+    SharedTransitionLayout {
+        val sharedScope = this
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .statusBarsPadding()
+                .onSizeChanged { size ->
+                    screenWidthPx = size.width
                 }
-            }
-            composeTraceEndSection()
-        }
-
-        // 年视图层：标题固定，HorizontalPager 只包裹网格。
-        if (viewModel.isYearView) {
-            val yearProgress = viewModel.yearViewProgress
-            composeTraceBeginSection("YearView:Compose")
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        val scale = lerp(3.3f, 1f, yearProgress)
-                        scaleX = scale
-                        scaleY = scale
-                        alpha = yearProgress.coerceIn(0f, 1f)
-                        transformOrigin = TransformOrigin(anchorPivotX, anchorPivotY)
-                    }
-                    .padding(horizontal = HORIZONTAL_PADDING_DP.dp)
-            ) {
-                YearHeader(
-                    year = viewModel.yearViewYear,
-                    currentYear = today.year,
-                    onYearChange = { newYear ->
-                        val offset = newYear - viewModel.yearViewYear
-                        val targetPage = yearPagerState.currentPage + offset
-                        if (targetPage != yearPagerState.currentPage) {
-                            coroutineScope.launch { yearPagerState.animateScrollToPage(targetPage) }
-                        }
-                    }
-                )
-                HorizontalPager(
-                    state = yearPagerState,
-                    beyondViewportPageCount = 0,
-                    flingBehavior = PagerDefaults.flingBehavior(state = yearPagerState),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) { page ->
-                    val pageOffset = abs(yearPagerState.currentPageOffsetFraction)
-                    val isCurrentPage = page == yearPagerState.currentPage
-                    val crossFadeAlpha = if (isCurrentPage) {
-                        1f - pageOffset
-                    } else {
-                        pageOffset
-                    }
-                    val pageYear = viewModel.selectedDate.year + (page - START_PAGE)
-                    YearGridView(
-                        year = pageYear,
-                        selectedMonth = if (pageYear == currentYear) currentMonth else 0,
-                        today = today,
-                        onMonthClick = { month ->
-                            viewModel.selectMonthFromYearView(month)
-                            @Suppress("DEPRECATION") // monthNumber 无替代 API
-                            val targetPage = yearMonthToPage(
-                                viewModel.yearViewYear, month,
-                                today.year, today.month.number
+        ) {
+            AnimatedContent(
+                targetState = viewModel.isYearView,
+                label = "month_year_transition",
+                transitionSpec = {
+                    fadeIn(tween(300, easing = FastOutSlowInEasing)) togetherWith
+                        fadeOut(tween(300, easing = FastOutSlowInEasing))
+                },
+                modifier = Modifier.fillMaxSize()
+            ) { isYearView ->
+                with(sharedScope) {
+                if (!isYearView) {
+                    composeTraceBeginSection("MonthView:Compose")
+                    val layoutReady = rowHeightPx > 0
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .sharedBounds(
+                                sharedContentState = rememberSharedContentState(key = "month_content"),
+                                animatedVisibilityScope = this@AnimatedContent,
+                                boundsTransform = { _, _ ->
+                                    tween(400, easing = FastOutSlowInEasing)
+                                }
                             )
-                            if (targetPage != pagerState.currentPage) {
-                                coroutineScope.launch { pagerState.scrollToPage(targetPage) }
+                            .alpha(if (layoutReady) 1f else 0f)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = HORIZONTAL_PADDING_DP.dp)
+                        ) {
+                            MonthHeader(
+                                year = currentYear,
+                                month = currentMonth,
+                                weekNumber = viewModel.getIsoWeekNumber(viewModel.selectedDate),
+                                showToday = viewModel.selectedDate != today,
+                                onToday = {
+                                    viewModel.selectDate(today)
+                                }
+                            )
+                            WeekdayHeader(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = ROW_PADDING_DP.dp)
+                            )
+                            CalendarPagerArea(
+                                viewModel = viewModel,
+                                today = today,
+                                rowHeightPx = rowHeightPx,
+                                screenWidthPx = screenWidthPx,
+                                onRowHeightMeasured = { h ->
+                                    if (h > 0) rowHeightPx = h
+                                },
+                                pagerState = pagerState,
+                                modifier = Modifier.clipToBounds()
+                            )
+                            BottomCardArea(
+                                viewModel = viewModel,
+                                today = today,
+                                rowHeightPx = rowHeightPx,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                    composeTraceEndSection()
+                } else {
+                    composeTraceBeginSection("YearView:Compose")
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .sharedBounds(
+                                sharedContentState = rememberSharedContentState(key = "month_content"),
+                                animatedVisibilityScope = this@AnimatedContent,
+                                boundsTransform = { _, _ ->
+                                    tween(400, easing = FastOutSlowInEasing)
+                                }
+                            )
+                            .padding(horizontal = HORIZONTAL_PADDING_DP.dp)
+                    ) {
+                        YearHeader(
+                            year = viewModel.yearViewYear,
+                            currentYear = today.year,
+                            onYearChange = { newYear ->
+                                val offset = newYear - viewModel.yearViewYear
+                                val targetPage = yearPagerState.currentPage + offset
+                                if (targetPage != yearPagerState.currentPage) {
+                                    coroutineScope.launch { yearPagerState.animateScrollToPage(targetPage) }
+                                }
                             }
-                        },
-                        modifier = Modifier.alpha(crossFadeAlpha)
-                    )
+                        )
+                        HorizontalPager(
+                            state = yearPagerState,
+                            beyondViewportPageCount = 0,
+                            flingBehavior = PagerDefaults.flingBehavior(state = yearPagerState),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) { page ->
+                            val pageOffset = abs(yearPagerState.currentPageOffsetFraction)
+                            val isCurrentPage = page == yearPagerState.currentPage
+                            val crossFadeAlpha = if (isCurrentPage) {
+                                1f - pageOffset
+                            } else {
+                                pageOffset
+                            }
+                            val pageYear = viewModel.selectedDate.year + (page - START_PAGE)
+                            YearGridView(
+                                year = pageYear,
+                                selectedMonth = if (pageYear == currentYear) currentMonth else 0,
+                                today = today,
+                                onMonthClick = { month ->
+                                    viewModel.selectMonthFromYearView(month)
+                                    @Suppress("DEPRECATION") // monthNumber 无替代 API
+                                    val targetPage = yearMonthToPage(
+                                        viewModel.yearViewYear, month,
+                                        today.year, today.month.number
+                                    )
+                                    if (targetPage != pagerState.currentPage) {
+                                        coroutineScope.launch { pagerState.scrollToPage(targetPage) }
+                                    }
+                                },
+                                modifier = Modifier.alpha(crossFadeAlpha)
+                            )
+                        }
+                    }
+                    composeTraceEndSection()
+                }
                 }
             }
-            composeTraceEndSection()
-        }
 
-        // FAB 浮动按钮
+            // FAB 浮动按钮
         FloatingActionButton(
             onClick = { isMenuExpanded = !isMenuExpanded },
             modifier = Modifier
@@ -357,6 +367,7 @@ fun CalendarMonthView(
             }
         }
     }
+}
 }
 
 @Composable
