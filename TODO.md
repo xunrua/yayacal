@@ -38,18 +38,18 @@
 
 | 状态 | 功能 | 方向 | 关键文件 | 备注 |
 |------|------|------|---------|------|
-| `[-]` | 智能排班 | AI | `ShiftPattern.kt` | overrides + 滑动窗口学习 |
-| `[-]` | 日历明信片 | 数据+视觉 | 新建 `PostcardExporter.kt` | Compose → Bitmap，多模板分享 |
-| `[-]` | 假勤博弈 | 数据 | 新建 `LegalHolidayAnalyzer.kt` | 轮班 vs 法定假日对比 |
-| `[-]` | streak 挑战 | 数据 | 新建 `HabitTracker.kt` | 习惯打卡 + 火焰动画 |
-| `[-]` | 周期先知 | 数据 | 新建 `CyclePredictor.kt` | 历史标记周期预测 |
-| `[-]` | 时间饼图 | 数据 | 新建 `TimePieChart.kt` | Canvas 饼图 + 下钻 |
-| `[-]` | 节奏雷达 | 数据 | `BottomCard.kt` | 五维雷达图 |
-| `[-]` | 星夜背景 | 视觉 | `CalendarMonthView.kt` | 暗色模式星空粒子 |
-| `[-]` | 触感翻页 | 视觉 | `CalendarPager.kt` | expect/actual Haptic 反馈 |
-| `[-]` | 时辰能量 | 文化 | `BottomCard.kt` | 十二时辰 LazyRow + 平台 actual |
-| `[-]` | 3D 翻页 | 视觉 | `CalendarPager.kt` | `rotationY` 翻页效果 |
-| `[-]` | 动态图标 | 视觉 | 平台代码 | Android ShortcutManager 动态更新 |
+| `[x]` | 智能排班 | AI | `ShiftPattern.kt` | overrides + 滑动窗口学习 |
+| `[x]` | 日历明信片 | 数据+视觉 | `PostcardExporter.kt` | Compose → Bitmap，多模板分享 |
+| `[x]` | 假勤博弈 | 数据 | `LegalHolidayAnalyzer.kt` | 轮班 vs 法定假日对比 |
+| `[x]` | streak 挑战 | 数据 | `HabitTracker.kt` | 习惯打卡 + 火焰动画 |
+| `[x]` | 周期先知 | 数据 | `CyclePredictor.kt` | 历史标记周期预测 |
+| `[x]` | 时间饼图 | 数据 | `TimePieChart.kt` | Canvas 饼图 + 下钻 |
+| `[x]` | 节奏雷达 | 数据 | `RhythmRadar.kt` | 五维雷达图 |
+| `[x]` | 星夜背景 | 视觉 | `StarryNightBackground.kt` | 暗色模式星空粒子 |
+| `[x]` | 触感翻页 | 视觉 | `HapticFeedback.kt` | Android HapticFeedbackConstants |
+| `[x]` | 时辰能量 | 文化 | `ShichenEnergy.kt` | 十二时辰 LazyRow + 五行属性 |
+| `[x]` | 3D 翻页 | 视觉 | `FlipPageEffect.kt` | `rotationY` 翻页效果 |
+| `[x]` | 动态图标 | 视觉 | `DynamicShortcutManager.kt` | Android ShortcutManager 动态更新 |
 
 ---
 
@@ -88,4 +88,4 @@
 
 ---
 
-*最后更新: 2026-05-20*
+*最后更新: 2026-05-21*
