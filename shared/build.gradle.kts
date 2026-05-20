@@ -1,58 +1,64 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    id("com.android.kotlin.multiplatform.library")
-    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.composeCompiler)
 }
 
-kotlin {
-    android {
-        namespace = "plus.rua.project.shared"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
+android {
+    namespace = "plus.rua.project.shared"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+
+    defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
-
-        withHostTest {}
-
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
     }
 
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "ComposeApp"
-            isStatic = true
-        }
+    buildFeatures {
+        compose = true
     }
 
-    sourceSets {
-        androidMain.dependencies {
-            implementation(libs.compose.uiToolingPreview)
-            implementation(libs.androidx.activity.compose)
-        }
-        commonMain.dependencies {
-            implementation(libs.compose.runtime)
-            implementation(libs.compose.foundation)
-            implementation(libs.compose.material3)
-            implementation(libs.compose.ui)
-            implementation(libs.compose.components.resources)
-            implementation(libs.compose.uiToolingPreview)
-            implementation(libs.androidx.lifecycle.viewmodelCompose)
-            implementation(libs.androidx.lifecycle.runtimeCompose)
-            implementation(libs.kotlinx.datetime)
-            implementation(libs.tyme4kt)
-            implementation(libs.sketch.compose)
-            implementation(libs.sketch.animated.gif)
-            implementation(libs.sketch.compose.resources)
-        }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-            implementation(libs.kotlinx.coroutines.test)
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    packaging {
+        resources {
+            excludes += listOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "/META-INF/LICENSE*",
+                "/META-INF/NOTICE*",
+                "META-INF/DEPENDENCIES",
+                "**/*.kotlin_metadata",
+                "**/*.kotlin_module",
+            )
         }
     }
+}
+
+dependencies {
+    implementation(platform(libs.compose.bom))
+
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.viewmodelCompose)
+    implementation(libs.androidx.lifecycle.runtimeCompose)
+
+    implementation(libs.compose.runtime)
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.uiToolingPreview)
+    implementation(libs.compose.uiTooling)
+
+    implementation(libs.kotlinx.datetime)
+    implementation(libs.tyme4kt)
+    implementation(libs.sketch.compose)
+    implementation(libs.sketch.animated.gif)
+
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

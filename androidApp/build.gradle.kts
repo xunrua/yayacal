@@ -3,7 +3,6 @@ import java.time.format.DateTimeFormatter
 
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
 }
 
@@ -49,12 +48,17 @@ android {
     }
 
     buildFeatures {
+        compose = true
         buildConfig = false
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
     }
 
     packaging {
@@ -83,6 +87,9 @@ android {
 
 dependencies {
     implementation(project(":shared"))
+
+    implementation(platform(libs.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.compose.uiToolingPreview)
+    implementation(libs.compose.uiTooling)
 }
