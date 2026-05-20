@@ -18,3 +18,5 @@
 - `sketch` 渲染 GIF 动画
 - 双模块:`:shared`(UI + 逻辑) · `:androidApp`(薄壳)
 - iOS 入口为 `MainViewController.kt`,Xcode 工程位于 `iosApp/`
+
+线条小狗表情包来自 https://www.douban.com/group/topic/264788645/?_i=9181692phrDzjR,9241256phrDzjR
