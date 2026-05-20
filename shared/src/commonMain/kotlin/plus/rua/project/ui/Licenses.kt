@@ -15,13 +15,12 @@ data class LicenseItem(
  * 项目使用的第三方库及其许可证列表。
  */
 val licenses = listOf(
-    LicenseItem("Kotlin", "Apache-2.0"),
-    LicenseItem("Compose Multiplatform", "Apache-2.0"),
-    LicenseItem("Material 3", "Apache-2.0"),
-    LicenseItem("kotlinx-datetime", "Apache-2.0"),
-    LicenseItem("tyme4kt", "MIT"),
-    LicenseItem("Sketch", "Apache-2.0"),
-    LicenseItem("AndroidX Activity", "Apache-2.0"),
+    LicenseItem("AndroidX Activity Compose", "Apache-2.0"),
     LicenseItem("AndroidX Lifecycle", "Apache-2.0"),
-    LicenseItem("JUnit", "EPL-1.0"),
+    LicenseItem("Compose Material 3", "Apache-2.0"),
+    LicenseItem("Compose Multiplatform", "Apache-2.0"),
+    LicenseItem("Kotlin", "Apache-2.0"),
+    LicenseItem("kotlinx-datetime", "Apache-2.0"),
+    LicenseItem("Sketch", "Apache-2.0"),
+    LicenseItem("tyme4kt", "MIT"),
 )
