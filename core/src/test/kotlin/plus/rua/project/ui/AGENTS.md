@@ -25,6 +25,6 @@ UI 工具函数测试，覆盖日历工具类 `CalendarUtils` 的日期转换算
 ## Dependencies
 
 ### Internal
-- `shared/src/commonMain/kotlin/plus/rua/project/ui/CalendarUtils.kt`
+- `core/src/main/kotlin/plus/rua/project/ui/CalendarUtils.kt`
 
 <!-- MANUAL: -->

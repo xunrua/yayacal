@@ -1,10 +1,10 @@
 <!-- Parent: ../../AGENTS.md -->
 <!-- Generated: 2026-05-20 | Updated: 2026-05-20 -->
 
-# commonTest
+# test
 
 ## Purpose
-共享模块的单元测试 source set，包含 ViewModel、班次模型和日历工具函数的测试。
+核心模块的单元测试 source set，包含 ViewModel、班次模型和日历工具函数的测试。
 
 ## Key Files
 
@@ -20,15 +20,14 @@
 ## For AI Agents
 
 ### Working In This Directory
-- 测试使用 `kotlin.test` 和 molecule（Turbine）进行状态流断言
-- 新增测试后运行 `./gradlew :shared:allTests`
+- 测试使用 `kotlin.test` 和 `kotlinx-coroutines-test`
+- 新增测试后运行 `./gradlew :core:test`
 - 测试类名遵循 `*Test.kt` 约定
 
-## Dependencies
+### Dependencies
 
-### External
-- `kotlin-test`
+#### External
+- `kotlin-test-junit`
 - `kotlinx-coroutines-test`
-- `molecule`（Turbine 风格的状态流测试）
 
 <!-- MANUAL: -->

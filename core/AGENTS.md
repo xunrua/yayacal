@@ -1,49 +1,48 @@
 <!-- Parent: ../AGENTS.md -->
 <!-- Generated: 2026-05-20 | Updated: 2026-05-20 -->
 
-# shared
+# core
 
 ## Purpose
-Kotlin Multiplatform 共享模块，包含所有 Compose UI、ViewModel 和业务逻辑。通过 `expect/actual` 机制为 Android 和 iOS 提供平台特定实现。这是项目的核心模块。
+Android Library 核心模块，包含所有 Jetpack Compose UI、ViewModel 和业务逻辑。作为 `:app` 模块的依赖库提供，是项目的主体代码所在。
 
 ## Key Files
 
 | File | Description |
 |------|-------------|
-| `build.gradle.kts` | 共享模块构建配置（KMP 插件设置、source sets、依赖） |
+| `build.gradle.kts` | 核心模块构建配置（Android Library 插件、Compose 编译器、依赖） |
 
 ## Subdirectories
 
 | Directory | Purpose |
 |-----------|---------|
-| `src/androidMain/` | Android 平台特定实现（见 `src/androidMain/AGENTS.md`） |
-| `src/commonMain/` | 所有 Compose UI、ViewModel 和业务逻辑（见 `src/commonMain/AGENTS.md`） |
-| `src/commonTest/` | 共享测试套件（见 `src/commonTest/AGENTS.md`） |
-| `src/iosMain/` | iOS 平台特定实现（见 `src/iosMain/AGENTS.md`） |
+| `src/main/` | 所有 Compose UI、ViewModel 和业务逻辑（见 `src/main/AGENTS.md`） |
+| `src/test/` | 单元测试套件（见 `src/test/AGENTS.md`） |
 
 ## For AI Agents
 
 ### Working In This Directory
-- 所有功能代码应放在 `commonMain` 中以跨平台复用
-- 仅在 `androidMain` / `iosMain` 中放置平台特有实现
-- 修改 `commonMain` 后需运行 `:shared:allTests` 验证
+- 所有功能代码应放在 `src/main/` 中
+- 包名：`plus.rua.project`（逻辑层）、`plus.rua.project.ui`（UI 层）
+- 修改核心逻辑后需运行 `:core:test` 验证
 
 ### Testing Requirements
-- 全部测试：`./gradlew :shared:allTests`
-- Android 主机测试：`./gradlew :shared:testAndroidHostTest`
-- 单类测试：`./gradlew :shared:testAndroidHostTest --tests "ClassName"`
+- 全部测试：`./gradlew :core:test`
+- 单类测试：`./gradlew :core:test --tests "ClassName"`
 
 ### Common Patterns
-- `expect` 声明在 `commonMain`，`actual` 实现在平台 source set
-- Compose 资源放在 `commonMain/composeResources/` 下
-- 包名：`plus.rua.project`（逻辑层）、`plus.rua.project.ui`（UI 层）
+- 公共 `@Composable` 函数需要 KDoc（见 `COMMENTS.md`）
+- `Modifier` 参数始终放在签名最后
+- 回调参数使用 `on` 前缀（`onDateClick`、`onMonthChanged`）
+- UI 文本使用中文
 
 ## Dependencies
 
 ### External
-- Compose Multiplatform 1.11.0, Material 3 1.10.0-alpha05
-- `kotlinx-datetime` 0.8.0, `kotlinx-coroutines`
-- `tyme4kt`（农历/节气）, `sketch` 4.4.0（GIF 显示）
-- `molecule`（测试用）
+- Jetpack Compose BOM, Material 3
+- `kotlinx-datetime`, `kotlinx-coroutines`
+- `tyme4kt`（农历/节气/节日）
+- `sketch`（GIF 显示）
+- `androidx-lifecycle-viewmodel-compose`
 
 <!-- MANUAL: -->

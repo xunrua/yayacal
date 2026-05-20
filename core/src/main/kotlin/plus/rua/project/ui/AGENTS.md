@@ -4,7 +4,7 @@
 # ui
 
 ## Purpose
-日历应用的所有 UI 组件层，基于 Compose Multiplatform + Material 3 构建。包含月视图、周视图、年视图、底部卡片、日期单元格、顶部标题栏以及关于/许可证页面。
+日历应用的所有 UI 组件层，基于 Jetpack Compose + Material 3 构建。包含月视图、周视图、年视图、底部卡片、日期单元格、顶部标题栏以及关于/许可证页面。
 
 ## Key Files
 
@@ -49,11 +49,11 @@
 ## Dependencies
 
 ### Internal
-- `shared/src/commonMain/kotlin/plus/rua/project/CalendarViewModel.kt` — 状态源
-- `shared/src/commonMain/kotlin/plus/rua/project/ShiftPattern.kt` — 班次数据
+- `core/src/main/kotlin/plus/rua/project/CalendarViewModel.kt` — 状态源
+- `core/src/main/kotlin/plus/rua/project/ShiftPattern.kt` — 班次数据
 
 ### External
-- Compose Multiplatform, Material 3
+- Jetpack Compose, Material 3
 - `kotlinx-datetime`
 - `tyme4kt`（农历、节气、节日）
 - `sketch`（GIF）

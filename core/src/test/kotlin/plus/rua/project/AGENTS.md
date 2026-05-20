@@ -24,12 +24,11 @@
 
 ### Working In This Directory
 - 修改 `CalendarViewModel` 或 `ShiftPattern` 后应更新对应测试
-- 测试使用 molecule 进行状态流断言
 
 ## Dependencies
 
 ### Internal
-- `shared/src/commonMain/kotlin/plus/rua/project/ShiftPattern.kt`
-- `shared/src/commonMain/kotlin/plus/rua/project/CalendarViewModel.kt`
+- `core/src/main/kotlin/plus/rua/project/ShiftPattern.kt`
+- `core/src/main/kotlin/plus/rua/project/CalendarViewModel.kt`
 
 <!-- MANUAL: -->
