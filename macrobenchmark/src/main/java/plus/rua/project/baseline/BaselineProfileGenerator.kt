@@ -3,6 +3,7 @@ package plus.rua.project.baseline
 import androidx.benchmark.macro.junit4.BaselineProfileRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.Until
 import org.junit.Rule
 import org.junit.Test
@@ -44,10 +45,12 @@ class BaselineProfileGenerator {
             includeInStartupProfile = true,
             profileBlock = {
                 // 1. 冷启动：从 launcher 启动应用
+                // 注：使用 shell command 绕过 startActivityAndWait，因为模拟器的 software
+                // renderer 不支持 gfxinfo framestats，会导致 amStartAndWait 超时。
                 pressHome()
-                startActivityAndWait()
-
-                // 2. 等待首帧渲染完成
+                device.executeShellCommand(
+                    "am start -W -n plus.rua.project/.MainActivity"
+                )
                 device.waitForIdle()
 
                 // 3. 模拟用户交互：展开 FAB 菜单
@@ -67,9 +70,9 @@ class BaselineProfileGenerator {
                 // 5. 在年视图中滑动到不同年份（覆盖动画和分页路径）
                 val yearGrid = device.findObject(By.res("plus.rua.project:id/year_grid"))
                 if (yearGrid != null) {
-                    yearGrid.swipe(300, 600, 300, 1200, 10)
+                    yearGrid.swipe(Direction.UP, 0.5f)
                     device.waitForIdle()
-                    yearGrid.swipe(300, 1200, 300, 600, 10)
+                    yearGrid.swipe(Direction.DOWN, 0.5f)
                     device.waitForIdle()
                 }
 
@@ -92,17 +95,17 @@ class BaselineProfileGenerator {
                 val calendarArea = device.findObject(By.res("plus.rua.project:id/calendar_pager"))
                     ?: device.findObject(By.textContains("2026"))
                 if (calendarArea != null) {
-                    calendarArea.swipe(300, 600, 300, 1200, 10)
+                    calendarArea.swipe(Direction.UP, 0.5f)
                     device.waitForIdle()
-                    calendarArea.swipe(300, 1200, 300, 600, 10)
+                    calendarArea.swipe(Direction.DOWN, 0.5f)
                     device.waitForIdle()
                 }
 
                 // 9. 左右滑动切换月份（覆盖 CalendarPager 翻页）
                 if (calendarArea != null) {
-                    calendarArea.swipe(600, 800, 100, 800, 10)
+                    calendarArea.swipe(Direction.LEFT, 0.5f)
                     device.waitForIdle()
-                    calendarArea.swipe(100, 800, 600, 800, 10)
+                    calendarArea.swipe(Direction.RIGHT, 0.5f)
                     device.waitForIdle()
                 }
 

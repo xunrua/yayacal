@@ -43,28 +43,31 @@ dependencies {
 
 val updateBaselineProfile by tasks.registering {
     group = "benchmark"
-    description = "运行 connectedBenchmarkAndroidTest 并将生成的 baseline-prof.txt 复制到 :core 模块"
+    description = "运行 connectedBenchmarkAndroidTest 并将生成的 startup-prof.txt 复制到 :core 模块"
 
     // 依赖基准测试 task（需要先连接设备/模拟器）
     dependsOn("connectedBenchmarkAndroidTest")
 
+    // 预先计算目标路径，避免在 doLast 中引用 project 对象（configuration cache 兼容）
+    val targetPath = rootProject.projectDir.resolve("core/src/main/baseline-prof.txt").absolutePath
+    val buildDirPath = layout.buildDirectory.get().asFile.absolutePath
+
     doLast {
-        // 寻找生成的 profile 文件（路径格式因设备/Gradle 版本略有不同）
+        // 寻找生成的 profile 文件（benchmark 1.4+ 文件名格式：{Class}_{Method}-startup-prof.txt）
         val sourcePaths = listOf(
-            // AGP 8.x+ 标准输出路径
-            "build/outputs/connected_android_test_additional_output/benchmark/",
-            "build/outputs/connected_android_test_additional_output/",
+            "$buildDirPath/outputs/connected_android_test_additional_output/benchmark/",
+            "$buildDirPath/outputs/connected_android_test_additional_output/",
         )
 
-        val targetFile = rootProject.projectDir.resolve("core/src/main/baseline-prof.txt")
-
+        val targetFile = File(targetPath)
         var copied = false
         for (path in sourcePaths) {
-            val dir = file(path)
+            val dir = File(path)
             if (!dir.exists()) continue
 
+            // 优先匹配不带时间戳的 startup-prof.txt（benchmark 1.4+ 格式）
             val profileFile = dir.walkTopDown()
-                .firstOrNull { it.name == "baseline-prof.txt" }
+                .firstOrNull { it.name.endsWith("-startup-prof.txt") && !it.name.contains(Regex("-\\d{4}-\\d{2}-\\d{2}-")) }
                 ?: continue
 
             profileFile.copyTo(targetFile, overwrite = true)
@@ -76,7 +79,7 @@ val updateBaselineProfile by tasks.registering {
 
         if (!copied) {
             throw GradleException(
-                "未找到生成的 baseline-prof.txt。\n" +
+                "未找到生成的 *-startup-prof.txt。\n" +
                 "请确认:\n" +
                 "  1. 设备/模拟器已连接 (adb devices)\n" +
                 "  2. 应用已安装在 benchmark 构建类型下\n" +

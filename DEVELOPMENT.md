@@ -117,6 +117,7 @@ CalendarMonthView (顶层屏幕)
 项目使用 `composeTraceBeginSection` / `composeTraceEndSection` 在关键代码段插入 trace marker，Android 上会被记录到系统 trace 中。iOS 为空操作。
 
 已有的 trace section：
+
 - `MonthView:Compose` / `YearView:Compose` — 顶层重组耗时
 - `YearView→MonthView` / `MonthView→YearView` — 年视图切换动画
 - `YearGridView:$year` / `generateMiniMonthDays:$year-$month` — 年网格渲染
@@ -125,6 +126,7 @@ CalendarMonthView (顶层屏幕)
 ### 分析折叠器卡顿的方法
 
 1. **录制 trace**：Android Studio → Profiler → CPU → 选择 "Trace Java Methods" 或命令行：
+
    ```bash
    adb shell perfetto -c - --txt \<<EOF
    buffers: { size_kb: 65536 }
@@ -247,6 +249,47 @@ CalendarMonthView (顶层屏幕)
 ### 已知排查结论（2026-05-19）
 
 对折叠器 trace 的分析显示：
+
 - **重组本身很快**（VM progress → Compose 约 500μs），不是卡顿来源。
 - **触摸事件采样间隔不均匀**是主要问题。某些拖拽序列中出现 30-50ms 的触摸事件间隔，偶尔有 >100ms 的断流。这属于系统/模拟器层的事件分发问题，而非 Compose 代码问题。
 - 若在真机上复现，建议检查是否有 CPU 抢占或手指短暂离屏。
+
+## Baseline Profile
+
+```bash
+# 编译 Android debug APK
+./gradlew :app:assembleDebug
+
+# 安装到设备
+./gradlew :app:installDebug
+
+# 编译 release APK（含 Baseline Profiles）
+./gradlew :app:assembleRelease
+
+./gradlew :app:installBenchmark
+```
+
+Baseline Profile 自动生成器。
+
+运行方式（一键生成 + 自动复制到 :core）：
+
+```
+./gradlew :macrobenchmark:updateBaselineProfile
+```
+
+仅运行基准测试（不自动复制）：
+
+```
+./gradlew :macrobenchmark:connectedBenchmarkAndroidTest
+```
+
+手动复制路径：
+`macrobenchmark/build/outputs/connected_android_test_additional_output/`
+
+测试覆盖全部用户交互路径，实现全量 AOT：
+
+1. 冷启动 → 首帧渲染
+2. FAB 展开 → 年视图 → 月视图
+3. 日期选择 → 周视图折叠/展开
+4. 关于页 → 开源许可页
+5. 返回主界面
