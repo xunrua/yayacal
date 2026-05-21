@@ -327,6 +327,44 @@ class CalendarViewModelStateTest {
         assertEquals(1f, vm.collapseProgress.value, 0.001f)
     }
 
+    @Test
+    fun onDragEnd_fastFlingUp_setsCollapsed() {
+        val vm = createViewModel()
+        vm.onDrag(0.1f)
+        vm.onDragEnd(velocityDpPerSec = 900f)
+        assertTrue(vm.isCollapsed.value)
+        assertEquals(1f, vm.collapseProgress.value, 0.001f)
+    }
+
+    @Test
+    fun onDragEnd_fastFlingDown_keepsExpanded() {
+        val vm = createViewModel()
+        vm.onDrag(0.9f)
+        vm.onDragEnd(velocityDpPerSec = -900f)
+        assertFalse(vm.isCollapsed.value)
+        assertEquals(0f, vm.collapseProgress.value, 0.001f)
+    }
+
+    @Test
+    fun onExpandDragEnd_fastFlingDown_setsExpanded() {
+        val vm = createViewModel()
+        vm.onDrag(1f)
+        vm.onExpandDrag(-0.1f)
+        vm.onExpandDragEnd(velocityDpPerSec = -900f)
+        assertFalse(vm.isCollapsed.value)
+        assertEquals(0f, vm.collapseProgress.value, 0.001f)
+    }
+
+    @Test
+    fun onExpandDragEnd_fastFlingUp_staysCollapsed() {
+        val vm = createViewModel()
+        vm.onDrag(1f)
+        vm.onExpandDrag(-0.9f)
+        vm.onExpandDragEnd(velocityDpPerSec = 900f)
+        assertTrue(vm.isCollapsed.value)
+        assertEquals(1f, vm.collapseProgress.value, 0.001f)
+    }
+
     // ---- getMonthDays 与 selectedDate 配合 ----
 
     @Test
