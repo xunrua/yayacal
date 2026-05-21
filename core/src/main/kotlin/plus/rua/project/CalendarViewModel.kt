@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
@@ -19,6 +20,7 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
+import plus.rua.project.LunarCache
 import plus.rua.project.ui.COLLAPSE_THRESHOLD
 import plus.rua.project.ui.FLING_VELOCITY_THRESHOLD_DP
 import kotlin.time.Clock
@@ -71,6 +73,42 @@ class CalendarViewModel(
     private val clock: Clock = Clock.System
 ) {
     private val today: LocalDate = clock.todayIn(TimeZone.currentSystemDefault())
+
+    init {
+        coroutineScope.launch(Dispatchers.Default) {
+            // 预计算当前月前后各 1 个月
+            val currentYear = today.year
+            val currentMonth = today.month.number
+
+            @Suppress("DEPRECATION") // monthNumber 无替代 API
+            val monthsToPrecompute = listOf(
+                currentMonth - 1 to currentYear,
+                currentMonth to currentYear,
+                currentMonth + 1 to currentYear
+            ).map { (month, year) ->
+                when {
+                    month < 1 -> 12 to year - 1
+                    month > 12 -> 1 to year + 1
+                    else -> month to year
+                }
+            }
+
+            monthsToPrecompute.forEach { (month, year) ->
+                val firstOfMonth = LocalDate(year, month, 1)
+                val offset = firstOfMonth.dayOfWeek.ordinal
+                val startDate = firstOfMonth.minus(DatePeriod(days = offset))
+                val nextMonth = if (month == 12) LocalDate(year + 1, 1, 1) else LocalDate(year, month + 1, 1)
+                val daysInMonth = nextMonth.minus(DatePeriod(days = 1)).day
+                val rows = ((offset + daysInMonth - 1) / 7) + 1
+                val totalDays = rows * 7
+
+                val dates = (0 until totalDays).map { i ->
+                    startDate.plus(DatePeriod(days = i))
+                }
+                LunarCache.precompute(dates)
+            }
+        }
+    }
 
     var selectedDate by mutableStateOf(today)
         private set
