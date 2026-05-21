@@ -1,7 +1,9 @@
 # YaYa 日历应用 Baseline Profile
-# 覆盖冷启动热点路径，消除 JIT 编译导致的启动掉帧
+# 全量 AOT 覆盖：冷启动 + 所有用户交互路径
+# 生成方式：./gradlew :macrobenchmark:updateBaselineProfile
+# 手动运行（不自动复制）：./gradlew :macrobenchmark:connectedBenchmarkAndroidTest
 
-# ========== 业务层热点方法 ==========
+# ========== 启动热点路径（必须 AOT）==========
 
 # DayCell — 启动时最热的 composable（35 次调用）
 HSPLplus/rua/project/ui/DayCellKt;->DayCell(Lkotlinx/datetime/LocalDate;ZZZLplus/rua/project/ShiftKind;ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;)V
@@ -15,6 +17,7 @@ HSPLplus/rua/project/DayCellInfo;-><init>(Ljava/lang/String;ZLjava/lang/String;L
 HSPLplus/rua/project/DayCellInfo;->getAnnotationText()Ljava/lang/String;
 HSPLplus/rua/project/DayCellInfo;->getIsAnnotationHighlight()Z
 HSPLplus/rua/project/DayCellInfo;->getHolidayBadge()Ljava/lang/String;
+HSPLplus/rua/project/DayCellInfo;->getLunarMonthName()Ljava/lang/String;
 
 # CalendarMonthPage — 月度网格页面
 HSPLplus/rua/project/ui/CalendarMonthPageKt;->CalendarMonthPage(ILkotlinx/datetime/LocalDate;Lkotlinx/datetime/LocalDate;Lkotlin/jvm/functions/Function1;FIFLkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;)V
@@ -44,6 +47,53 @@ HSPLplus/rua/project/ui/CalendarUtilsKt;->calculateWeeksCount(II)I
 HSPLplus/rua/project/ui/CalendarUtilsKt;->calculateWeeksCountForPage(ILkotlinx/datetime/LocalDate;)I
 HSPLplus/rua/project/ui/CalendarUtilsKt;->pageToYearMonth(IILkotlinx/datetime/LocalDate;)Lkotlin/Pair;
 HSPLplus/rua/project/ui/CalendarUtilsKt;->yearMonthToPage(IIII)I
+
+# ========== 全量业务组件覆盖 ==========
+
+# CalendarUtils 剩余方法（lerp、toWeekMonday、pageToWeekMonday、relativeDayDescription、formatLunarDate）
+HSPLplus/rua/project/ui/CalendarUtilsKt;->lerp(FFF)F
+HSPLplus/rua/project/ui/CalendarUtilsKt;->pageToWeekMonday(ILkotlinx/datetime/LocalDate;)Lkotlinx/datetime/LocalDate;
+HSPLplus/rua/project/ui/CalendarUtilsKt;->formatLunarDate(Lkotlinx/datetime/LocalDate;)Ljava/lang/String;
+HSPLplus/rua/project/ui/CalendarUtilsKt;->relativeDayDescription(Lkotlinx/datetime/LocalDate;Lkotlinx/datetime/LocalDate;)Ljava/lang/String;
+
+# MonthHeader
+HSPLplus/rua/project/ui/MonthHeaderKt;->MonthHeader(IILandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+
+# WeekdayHeader
+HSPLplus/rua/project/ui/WeekdayHeaderKt;->WeekdayHeader(Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+
+# YearGridView / YearHeader / MiniMonth
+HSPLplus/rua/project/ui/YearGridViewKt;->YearGridView(Lkotlinx/datetime/LocalDate;Lkotlinx/datetime/LocalDate;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;)V
+HSPLplus/rua/project/ui/YearGridViewKt;->YearHeader(ILkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+
+# AboutScreen
+HSPLplus/rua/project/ui/AboutScreenKt;->AboutScreen(Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;)V
+
+# LicensesScreen / LicenseItem
+HSPLplus/rua/project/ui/LicensesScreenKt;->LicensesScreen(Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;)V
+
+# AnimatedGif
+HSPLplus/rua/project/ui/AnimatedGifKt;->AnimatedGif(Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Alignment;Landroidx/compose/ui/layout/ContentScale;Landroidx/compose/runtime/Composer;II)V
+
+# CalendarViewModel 内部数据类
+HSPLplus/rua/project/CalendarViewModel$CalendarDay;-><init>(Lkotlinx/datetime/LocalDate;Z)V
+HSPLplus/rua/project/CalendarViewModel$CalendarDay;->getDate()Lkotlinx/datetime/LocalDate;
+HSPLplus/rua/project/CalendarViewModel$CalendarDay;->getIsToday()Z
+
+# ShiftPattern
+HSPLplus/rua/project/ShiftPattern;-><init>(Lkotlinx/datetime/LocalDate;[Lplus/rua/project/ShiftKind;)V
+HSPLplus/rua/project/ShiftPattern;->getShift(Lkotlinx/datetime/LocalDate;)Lplus/rua/project/ShiftKind;
+
+# AppInfo
+HSPLplus/rua/project/AppInfo;-><clinit>()V
+
+# ComposeTrace
+HSPLplus/rua/project/ComposeTraceKt;->composeTraceBeginSection(Ljava/lang/String;)V
+HSPLplus/rua/project/ComposeTraceKt;->composeTraceEndSection()V
+
+# Platform
+HSPLplus/rua/project/PlatformKt;->getAppVersion(Landroid/content/Context;)Ljava/lang/String;
+HSPLplus/rua/project/PlatformKt;->PredictiveBackHandler(ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 
 # ========== Compose 框架关键路径 ==========
 
@@ -80,10 +130,10 @@ HSPLandroidx/compose/runtime/EffectsKt;->LaunchedEffect(Ljava/lang/Object;Lkotli
 # Box / Column / Row
 HSPLandroidx/compose/foundation/layout/BoxKt;->Box(Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Alignment;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 HSPLandroidx/compose/foundation/layout/ColumnKt;->Column(Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/layout/Arrangement$Vertical;Landroidx/compose/ui/Alignment$Horizontal;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
-HSPLandroidx/compose/foundation/layout/RowKt;->Row(Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/layout/Arrangement$Horizontal;Landroidx/compose/ui/Alignment$Vertical;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+HSPLandroidx/compose/foundation/layout/RowKt;->Row(Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Alignment$Vertical;Landroidx/compose/foundation/layout/Arrangement$Horizontal;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 
 # Text
-HSPLandroidx/compose/material3/TextKt;->Text(Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLandroidx/compose/ui/text/font/FontWeight;Landroidx/compose/ui/text/font/FontStyle;Landroidx/compose/ui/text/font/FontSynthesis;Landroidx/compose/ui/text/style/TextAlign;Landroidx/compose/ui/text/style/TextDirection;JLandroidx/compose/ui/text/style/TextDecoration;Landroidx/compose/ui/text/style/TextGeometricTransform;Landroidx/compose/ui/text/style/TextIndent;Landroidx/compose/ui/text/PlatformTextStyle;Landroidx/compose/ui/text/style/LineHeightStyle;Landroidx/compose/ui/text/style/LineBreak;Landroidx/compose/ui/text/style/Hyphens;Landroidx/compose/ui/text/IntLocale;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/runtime/Composer;IIII)V
+HSPLandroidx/compose/material3/TextKt;->Text(Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLandroidx/compose/ui/text/font/FontWeight;Landroidx/compose/ui/text/font/FontStyle;Landroidx/compose/ui/text/font/FontSynthesis;Landroidx/compose/ui/text/style/TextAlign;Landroidx/compose/ui/text/style/TextDirection;JLandroidx/compose/ui/text/style/TextDecoration;Landroidx/compose/ui/text/style/TextGeometricTransform;Landroidx/compose/ui/text/style/TextIndent;Landroidx/compose/text/PlatformTextStyle;Landroidx/compose/ui/text/style/LineHeightStyle;Landroidx/compose/ui/text/style/LineBreak;Landroidx/compose/ui/text/style/Hyphens;Landroidx/compose/ui/text/IntLocale;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/runtime/Composer;IIII)V
 
 # Surface / MaterialTheme
 HSPLandroidx/compose/material3/SurfaceKt;->Surface(Landroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/Shape;JJFFLandroidx/compose/foundation/BorderStroke;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
@@ -104,6 +154,10 @@ HSPLandroidx/compose/animation/core/Transition$TransitionAnimationState;->update
 # animateFloatAsState
 HSPLandroidx/compose/animation/core/AnimateAsStateKt;->animateFloatAsState(FLandroidx/compose/animation/core/AnimationSpec;FLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
 
+# AnimatedContent / fadeIn / fadeOut
+HSPLandroidx/compose/animation/AnimatedContentKt;->AnimatedContent(Ljava/lang/Object;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Alignment;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;III)V
+HSPLandroidx/compose/animation/AnimatedVisibilityKt;->AnimatedVisibility(ZLandroidx/compose/ui/Modifier;Landroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;Ljava/lang/String;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+
 # ========== Pager 相关 ==========
 
 # HorizontalPager
@@ -111,6 +165,11 @@ HSPLandroidx/compose/foundation/pager/PagerKt;->HorizontalPager(Landroidx/compos
 HSPLandroidx/compose/foundation/pager/PagerState;-><init>(IFLandroidx/compose/foundation/lazy/LazyListState;)V
 HSPLandroidx/compose/foundation/pager/PagerState;->getCurrentPage()I
 HSPLandroidx/compose/foundation/pager/PagerState;->getCurrentPageOffsetFraction()F
+
+# LazyListState
+HSPLandroidx/compose/foundation/lazy/LazyListState;-><init>()V
+HSPLandroidx/compose/foundation/lazy/LazyListState;->getFirstVisibleItemIndex()I
+HSPLandroidx/compose/foundation/lazy/LazyListState;->getFirstVisibleItemScrollOffset()I
 
 # ========== Sketch 图片加载 ==========
 
@@ -140,3 +199,7 @@ HSPLcom/tyme/solar/SolarTermDay;->getSolarTerm()Lcom/tyme/solar/SolarTerm;
 
 # SolarTerm
 HSPLcom/tyme/solar/SolarTerm;->getName()Ljava/lang/String;
+
+# SolarFestival / LegalHoliday
+HSPLcom/tyme/solar/SolarFestival;->getName()Ljava/lang/String;
+HSPLcom/tyme/solar/LegalHoliday;->getName()Ljava/lang/String;

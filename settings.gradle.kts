@@ -30,3 +30,4 @@ dependencyResolutionManagement {
 
 include(":core")
 include(":app")
+include(":macrobenchmark")

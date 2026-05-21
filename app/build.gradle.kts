@@ -45,7 +45,15 @@ android {
             )
             signingConfig = signingConfigs.getByName("debug")
         }
+        // benchmark 构建类型供 macrobenchmark 模块使用
+        create("benchmark") {
+            initWith(buildTypes.getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+        }
     }
+
 
     buildFeatures {
         compose = true
