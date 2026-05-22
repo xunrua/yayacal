@@ -10,12 +10,12 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 
 /**
- * 获取 GIF 资源的 URI。
+ * 获取 WebP 动画资源的 URI。
  *
- * @param gifFile GIF 文件名（如 "001.gif"）
+ * @param webpFile WebP 文件名（如 "001.webp"）
  * @return 平台特定的资源 URI
  */
-fun getGifUri(gifFile: String): String = "file:///android_asset/gifs/$gifFile"
+fun getWebpUri(webpFile: String): String = "file:///android_asset/gifs/$webpFile"
 
 fun getAppIconUri(): String = "file:///android_asset/app_icon.png?v=2"
 

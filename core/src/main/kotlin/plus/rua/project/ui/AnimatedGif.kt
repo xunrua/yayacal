@@ -11,12 +11,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import com.github.panpf.sketch.AsyncImage
-import plus.rua.project.getGifUri
+import plus.rua.project.getWebpUri
 
 /**
- * GIF 文件名列表（001.gif ~ 152.gif）。
+ * WebP 动画文件名列表（001.webp ~ 152.webp）。
  */
-private val GIF_FILES = (1..152).map { "${it.toString().padStart(3, '0')}.gif" }
+private val WEBP_FILES = (1..152).map { "${it.toString().padStart(3, '0')}.webp" }
 
 /**
  * 显示动画 GIF 图片，切换日期时随机选择一个。
@@ -31,8 +31,8 @@ fun AnimatedGif(
     contentDescription: String? = null,
     seed: Any? = null,
 ) {
-    val gifFile = remember(seed) { GIF_FILES.random() }
-    val uri = remember(gifFile) { getGifUri(gifFile) }
+    val webpFile = remember(seed) { WEBP_FILES.random() }
+    val uri = remember(webpFile) { getWebpUri(webpFile) }
     val scale = remember { Animatable(0f) }
 
     LaunchedEffect(seed) {

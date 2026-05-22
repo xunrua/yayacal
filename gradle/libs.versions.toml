@@ -38,7 +38,7 @@ compose-uiTooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-uiToolingPreview = { module = "androidx.compose.ui:ui-tooling-preview" }
 kotlinx-coroutines-test = "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0"
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
-sketch-animated-gif = { module = "io.github.panpf.sketch4:sketch-animated-gif", version.ref = "sketch" }
+sketch-animated-webp = { module = "io.github.panpf.sketch4:sketch-animated-webp", version.ref = "sketch" }
 sketch-compose = { module = "io.github.panpf.sketch4:sketch-compose", version.ref = "sketch" }
 tyme4kt = { module = "cn.6tail:tyme4kt", version.ref = "tyme4kt" }
 
