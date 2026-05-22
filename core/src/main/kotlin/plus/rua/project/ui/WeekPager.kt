@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,6 +46,7 @@ fun WeekPager(
     modifier: Modifier = Modifier
 ) {
     val initialWeekMonday = remember { selectedDate.toWeekMonday() }
+    val interactionSource = remember { MutableInteractionSource() }
     val pagerState = rememberPagerState(
         initialPage = START_PAGE,
         pageCount = { Int.MAX_VALUE }
@@ -97,7 +99,8 @@ fun WeekPager(
                     shiftKind = shiftKindAt(date),
                     showLegalHoliday = showLegalHoliday,
                     onClick = { onDateClick(date) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    interactionSource = interactionSource
                 )
             }
         }

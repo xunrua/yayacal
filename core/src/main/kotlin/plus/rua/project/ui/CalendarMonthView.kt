@@ -60,7 +60,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -558,10 +557,9 @@ private fun BottomCardArea(
             onExpandDrag = { delta -> viewModel.onExpandDrag(delta) },
             onExpandDragEnd = { velocity -> viewModel.onExpandDragEnd(velocity) },
             dragRangePx = dragRangePx,
-            modifier = modifier.graphicsLayer {
-                translationY = slideProgress * 200.dp.toPx()
-                alpha = 1f - slideProgress
-            }
+            modifier = modifier
+                .offset(y = with(density) { (slideProgress * 200).dp })
+                .alpha(1f - slideProgress)
         )
     }
 }

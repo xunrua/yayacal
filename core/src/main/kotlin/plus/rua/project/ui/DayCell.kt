@@ -1,10 +1,9 @@
 package plus.rua.project.ui
 
-import androidx.compose.animation.animateColor
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -69,6 +68,7 @@ fun DayCell(
     showLegalHoliday: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     lunarCache: LunarCache = LunarCache.default
 ) {
     val lunarData by produceState(
@@ -89,83 +89,74 @@ fun DayCell(
         else -> DayCellState.NORMAL
     }
 
-    val transition = updateTransition(targetState = currentState, label = "dayCell")
-
-    val revealProgress by transition.animateFloat(
-        transitionSpec = { tween(150, easing = FastOutSlowInEasing) },
-        label = "revealProgress"
-    ) { state ->
-        when (state) {
+    val revealProgress by animateFloatAsState(
+        targetValue = when (currentState) {
             DayCellState.SELECTED, DayCellState.SELECTED_TODAY -> 1f
             else -> 0f
-        }
-    }
+        },
+        animationSpec = tween(150, easing = FastOutSlowInEasing),
+        label = "revealProgress"
+    )
 
-    val contentColor by transition.animateColor(
-        transitionSpec = { tween(150, easing = FastOutSlowInEasing) },
-        label = "contentColor"
-    ) { state ->
-        when (state) {
+    val contentColor by animateColorAsState(
+        targetValue = when (currentState) {
             DayCellState.SELECTED_TODAY -> MaterialTheme.colorScheme.onPrimaryContainer
             DayCellState.SELECTED -> MaterialTheme.colorScheme.primary
             DayCellState.TODAY -> MaterialTheme.colorScheme.primary
             DayCellState.OTHER_MONTH -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             DayCellState.NORMAL -> MaterialTheme.colorScheme.onSurface
-        }
-    }
+        },
+        animationSpec = tween(150, easing = FastOutSlowInEasing),
+        label = "contentColor"
+    )
 
     // 选中今天:实心填充 primaryContainer;其他状态不填充。
-    val selectedFillColor by transition.animateColor(
-        transitionSpec = { tween(150, easing = FastOutSlowInEasing) },
-        label = "selectedFillColor"
-    ) { state ->
-        when (state) {
+    val selectedFillColor by animateColorAsState(
+        targetValue = when (currentState) {
             DayCellState.SELECTED_TODAY -> MaterialTheme.colorScheme.primaryContainer
             else -> Color.Transparent
-        }
-    }
+        },
+        animationSpec = tween(150, easing = FastOutSlowInEasing),
+        label = "selectedFillColor"
+    )
 
     // 选中非今天:绘制描边圆,避免遮挡右上角角标。
-    val selectedOutlineAlpha by transition.animateFloat(
-        transitionSpec = { tween(150, easing = FastOutSlowInEasing) },
-        label = "selectedOutlineAlpha"
-    ) { state ->
-        when (state) {
+    val selectedOutlineAlpha by animateFloatAsState(
+        targetValue = when (currentState) {
             DayCellState.SELECTED -> 1f
             else -> 0f
-        }
-    }
+        },
+        animationSpec = tween(150, easing = FastOutSlowInEasing),
+        label = "selectedOutlineAlpha"
+    )
 
     val selectedOutlineColor = MaterialTheme.colorScheme.primary
 
-    val lunarColor by transition.animateColor(
-        transitionSpec = { tween(150, easing = FastOutSlowInEasing) },
-        label = "lunarColor"
-    ) { state ->
-        if (isAnnotationHighlight) {
-            when (state) {
+    val lunarColor by animateColorAsState(
+        targetValue = if (isAnnotationHighlight) {
+            when (currentState) {
                 DayCellState.SELECTED_TODAY -> MaterialTheme.colorScheme.onPrimaryContainer.copy(
                     alpha = 0.85f
                 )
-
                 DayCellState.SELECTED -> MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
                 DayCellState.TODAY -> MaterialTheme.colorScheme.primary
                 DayCellState.OTHER_MONTH -> MaterialTheme.colorScheme.error.copy(alpha = 0.35f)
                 DayCellState.NORMAL -> MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
             }
         } else {
-            when (state) {
+            when (currentState) {
                 DayCellState.SELECTED_TODAY -> MaterialTheme.colorScheme.onPrimaryContainer.copy(
                     alpha = 0.7f
                 )
-
                 DayCellState.SELECTED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                 DayCellState.TODAY -> MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                 DayCellState.OTHER_MONTH -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.26f)
                 DayCellState.NORMAL -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             }
-        }
-    }
+        },
+        animationSpec = tween(150, easing = FastOutSlowInEasing),
+        label = "lunarColor"
+    )
 
     val holidayBadgeColor = when (holidayBadge) {
         "休" -> MaterialTheme.colorScheme.error
@@ -206,7 +197,7 @@ fun DayCell(
                     }
                 }
                 .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
+                    interactionSource = interactionSource,
                     indication = null,
                     onClick = onClick
                 ),

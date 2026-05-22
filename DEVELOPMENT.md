@@ -1,5 +1,35 @@
 # 开发指南
 
+## 性能追踪
+
+使用 `scripts/profile.sh` 一键抓取 Perfetto trace、帧统计和内存快照。
+
+```bash
+# 默认抓取 8 秒
+./scripts/profile.sh
+
+# 抓取 15 秒
+./scripts/profile.sh 15
+
+# 应用已在运行时，不自动启动
+./scripts/profile.sh --no-launch
+```
+
+输出文件保存在 `logs/` 目录：
+
+| 文件 | 说明 |
+|------|------|
+| `trace_*.perfetto-trace` | Perfetto trace，在 https://ui.perfetto.dev 打开 |
+| `framestats_*.txt` | GPU 帧统计 |
+| `meminfo_*.txt` | 内存快照 |
+| `report_*.md` | 追踪报告摘要 |
+
+trace 中包含自定义标记：
+- `MonthView:Compose` — 月视图重组
+- `YearView:Compose` — 年视图重组
+- `VM:collapseProgress` — 折叠动画
+- `getMonthDays:*` — 月份网格计算
+
 ## Baseline Profile
 
 ```bash
