@@ -201,6 +201,7 @@ fun CalendarMonthView(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background)
                             .alpha(if (layoutReady) 1f else 0f)
                     ) {
                         Column(
@@ -269,6 +270,7 @@ fun CalendarMonthView(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background)
                             .padding(horizontal = HORIZONTAL_PADDING_DP.dp)
                     ) {
                         YearHeader(
