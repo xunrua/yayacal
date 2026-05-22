@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
  */
 fun getWebpUri(webpFile: String): String = "file:///android_asset/gifs/$webpFile"
 
-fun getAppIconUri(): String = "file:///android_asset/app_icon.png?v=2"
+fun getAppIconUri(): String = "file:///android_asset/app_icon.webp?v=2"
 
 @Composable
 fun getAppVersion(): String {
