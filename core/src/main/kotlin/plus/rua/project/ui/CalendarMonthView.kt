@@ -123,6 +123,7 @@ fun CalendarMonthView(
     var rowHeightPx by remember { mutableIntStateOf(0) }
     var screenWidthPx by remember { mutableIntStateOf(0) }
     var isMenuExpanded by remember { mutableStateOf(false) }
+
     // 视图切换时自动关闭菜单
     LaunchedEffect(isYearView) {
         isMenuExpanded = false
@@ -136,26 +137,15 @@ fun CalendarMonthView(
         pageCount = { Int.MAX_VALUE }
     )
 
-    // 进入年视图时同步 yearPagerState 到当前年
-    LaunchedEffect(isYearView) {
-        if (isYearView) {
-            if (yearPagerState.currentPage != START_PAGE) {
-                yearPagerState.scrollToPage(START_PAGE)
-            }
-        }
-    }
-
-    // 年视图翻页时同步 yearViewYear
+    // 年视图翻页时同步 yearViewYear（跟踪 settled page 差值）
     LaunchedEffect(yearPagerState) {
+        var lastSettledPage = yearPagerState.currentPage
         snapshotFlow { yearPagerState.settledPage }.collect { page ->
-            val offset = page - START_PAGE
-            val targetYear = selectedDate.year + offset
-            if (targetYear != yearViewYear) {
-                if (targetYear > yearViewYear) {
-                    viewModel.incrementYear()
-                } else {
-                    viewModel.decrementYear()
-                }
+            if (page != lastSettledPage) {
+                val diff = page - lastSettledPage
+                val newYear = viewModel.yearViewYear.value + diff
+                viewModel.setYearViewYear(newYear)
+                lastSettledPage = page
             }
         }
     }
@@ -299,7 +289,7 @@ fun CalendarMonthView(
                             } else {
                                 pageOffset
                             }
-                            val pageYear = selectedDate.year + (page - START_PAGE)
+                            val pageYear = yearViewYear + (page - yearPagerState.currentPage)
                             YearGridView(
                                 year = pageYear,
                                 selectedMonth = if (pageYear == currentYear) currentMonth else 0,

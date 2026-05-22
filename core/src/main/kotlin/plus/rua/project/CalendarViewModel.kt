@@ -208,6 +208,10 @@ class CalendarViewModel(
         _yearViewYear.value = _yearViewYear.value - 1
     }
 
+    fun setYearViewYear(year: Int) {
+        _yearViewYear.value = year
+    }
+
     /**
      * 展开状态下拖拽折叠，delta 正值推动 progress 向 1（折叠方向）。
      *
