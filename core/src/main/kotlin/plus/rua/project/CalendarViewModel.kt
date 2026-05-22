@@ -18,7 +18,6 @@ import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import plus.rua.project.ui.COLLAPSE_THRESHOLD
-import plus.rua.project.ui.FLING_VELOCITY_THRESHOLD_DP
 import plus.rua.project.ui.getMonthGridInfo
 import kotlin.time.Clock
 
@@ -215,25 +214,17 @@ class CalendarViewModel(
      * @param delta 拖拽增量，已归一化到 [0,1] 区间
      */
     fun onDrag(delta: Float) {
-        val new = (_collapseProgress.value + delta).coerceIn(0f, 1f)
-        _collapseProgress.value = new
+        _collapseProgress.value = (_collapseProgress.value + delta).coerceIn(0f, 1f)
     }
 
     /**
-     * 展开状态拖拽结束，根据进度和速度决定折叠或回弹。
+     * 展开状态拖拽结束，根据进度决定折叠或回弹。
      *
      * 拖拽超过阈值时自动折叠到周视图，否则回弹到月视图。
-     *
-     * @param velocityDpPerSec 松手时的 fling 速度 (dp/s)，正值=上滑（折叠方向），负值=下滑（展开方向）
      */
-    fun onDragEnd(velocityDpPerSec: Float = 0f) {
+    fun onDragEnd() {
         val progress = _collapseProgress.value
-        val shouldCollapse = when {
-            velocityDpPerSec > FLING_VELOCITY_THRESHOLD_DP -> true
-            velocityDpPerSec < -FLING_VELOCITY_THRESHOLD_DP -> false
-            else -> progress > COLLAPSE_THRESHOLD
-        }
-        if (shouldCollapse) {
+        if (progress > COLLAPSE_THRESHOLD) {
             _isCollapsed.value = true
             _collapseProgress.value = 1f
         } else {
@@ -248,25 +239,17 @@ class CalendarViewModel(
      * @param delta 拖拽增量，已归一化到 [0,1] 区间
      */
     fun onExpandDrag(delta: Float) {
-        val new = (_collapseProgress.value + delta).coerceIn(0f, 1f)
-        _collapseProgress.value = new
+        _collapseProgress.value = (_collapseProgress.value + delta).coerceIn(0f, 1f)
     }
 
     /**
-     * 折叠状态拖拽结束，根据进度和速度决定展开或回弹。
+     * 折叠状态拖拽结束，根据进度决定展开或回弹。
      *
      * 下拉超过阈值时自动展开到月视图，否则回弹到周视图。
-     *
-     * @param velocityDpPerSec 松手时的 fling 速度 (dp/s)，正值=上滑，负值=下滑
      */
-    fun onExpandDragEnd(velocityDpPerSec: Float = 0f) {
+    fun onExpandDragEnd() {
         val progress = _collapseProgress.value
-        val shouldExpand = when {
-            velocityDpPerSec < -FLING_VELOCITY_THRESHOLD_DP -> true
-            velocityDpPerSec > FLING_VELOCITY_THRESHOLD_DP -> false
-            else -> progress < COLLAPSE_THRESHOLD
-        }
-        if (shouldExpand) {
+        if (progress < (1 - COLLAPSE_THRESHOLD)) {
             _isCollapsed.value = false
             _collapseProgress.value = 0f
         } else {

@@ -6,6 +6,9 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -106,6 +109,13 @@ fun CalendarMonthView(
     val yearViewYear = uiState.yearViewYear
     val collapseProgress = uiState.collapseProgress
     val showLegalHoliday = uiState.showLegalHoliday
+
+    // 松手后 progress 从当前值 spring 动画到目标值（0 或 1）
+    val animatedCollapseProgress by animateFloatAsState(
+        targetValue = collapseProgress,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label = "collapseProgress"
+    )
 
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
@@ -215,7 +225,7 @@ fun CalendarMonthView(
                                     selectedDate = selectedDate,
                                     today = today,
                                     isCollapsed = isCollapsed,
-                                    collapseProgress = collapseProgress,
+                                    collapseProgress = animatedCollapseProgress,
                                     showLegalHoliday = showLegalHoliday,
                                     rowHeightPx = rowHeightPx,
                                     screenWidthPx = screenWidthPx,
@@ -562,9 +572,9 @@ private fun BottomCardArea(
             today = today,
             shiftKind = shiftKind,
             onDrag = { delta -> viewModel.onDrag(delta) },
-            onDragEnd = { velocity -> viewModel.onDragEnd(velocity) },
+            onDragEnd = { viewModel.onDragEnd() },
             onExpandDrag = { delta -> viewModel.onExpandDrag(delta) },
-            onExpandDragEnd = { velocity -> viewModel.onExpandDragEnd(velocity) },
+            onExpandDragEnd = { viewModel.onExpandDragEnd() },
             dragRangePx = dragRangePx,
             modifier = modifier
                 .offset(y = with(density) { (slideProgress * 200).dp })

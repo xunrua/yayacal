@@ -311,7 +311,7 @@ class CalendarViewModelStateTest {
     fun onExpandDragEnd_progressBelowThreshold_expands() {
         val vm = createViewModel()
         vm.onDrag(1f)
-        vm.onExpandDrag(-0.95f)
+        vm.onExpandDrag(-0.15f) // progress = 0.85 < 0.92
         vm.onExpandDragEnd()
         assertFalse(vm.isCollapsed.value)
         assertEquals(0f, vm.collapseProgress.value, 0.001f)
@@ -321,46 +321,8 @@ class CalendarViewModelStateTest {
     fun onExpandDragEnd_progressAboveThreshold_staysCollapsed() {
         val vm = createViewModel()
         vm.onDrag(1f)
-        vm.onExpandDrag(-0.05f)
+        vm.onExpandDrag(-0.05f) // progress = 0.95 > 0.92
         vm.onExpandDragEnd()
-        assertTrue(vm.isCollapsed.value)
-        assertEquals(1f, vm.collapseProgress.value, 0.001f)
-    }
-
-    @Test
-    fun onDragEnd_fastFlingUp_setsCollapsed() {
-        val vm = createViewModel()
-        vm.onDrag(0.1f)
-        vm.onDragEnd(velocityDpPerSec = 900f)
-        assertTrue(vm.isCollapsed.value)
-        assertEquals(1f, vm.collapseProgress.value, 0.001f)
-    }
-
-    @Test
-    fun onDragEnd_fastFlingDown_keepsExpanded() {
-        val vm = createViewModel()
-        vm.onDrag(0.9f)
-        vm.onDragEnd(velocityDpPerSec = -900f)
-        assertFalse(vm.isCollapsed.value)
-        assertEquals(0f, vm.collapseProgress.value, 0.001f)
-    }
-
-    @Test
-    fun onExpandDragEnd_fastFlingDown_setsExpanded() {
-        val vm = createViewModel()
-        vm.onDrag(1f)
-        vm.onExpandDrag(-0.1f)
-        vm.onExpandDragEnd(velocityDpPerSec = -900f)
-        assertFalse(vm.isCollapsed.value)
-        assertEquals(0f, vm.collapseProgress.value, 0.001f)
-    }
-
-    @Test
-    fun onExpandDragEnd_fastFlingUp_staysCollapsed() {
-        val vm = createViewModel()
-        vm.onDrag(1f)
-        vm.onExpandDrag(-0.9f)
-        vm.onExpandDragEnd(velocityDpPerSec = 900f)
         assertTrue(vm.isCollapsed.value)
         assertEquals(1f, vm.collapseProgress.value, 0.001f)
     }

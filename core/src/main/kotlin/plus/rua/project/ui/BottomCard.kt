@@ -60,13 +60,12 @@ fun BottomCard(
     today: LocalDate,
     shiftKind: ShiftKind?,
     onDrag: (Float) -> Unit,
-    onDragEnd: (Float) -> Unit,
+    onDragEnd: () -> Unit,
     onExpandDrag: (Float) -> Unit,
-    onExpandDragEnd: (Float) -> Unit,
+    onExpandDragEnd: () -> Unit,
     dragRangePx: Float,
     modifier: Modifier = Modifier
 ) {
-    val density = LocalDensity.current
     val relativeDesc = relativeDayDescription(selectedDate, today)
 
     @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
@@ -87,36 +86,21 @@ fun BottomCard(
         modifier = modifier
             .fillMaxWidth()
             .pointerInput(isCollapsed) {
-                val velocityTracker = androidx.compose.ui.input.pointer.util.VelocityTracker()
                 if (isCollapsed) {
                     // 折叠状态：下拉恢复到月视图
                     detectVerticalDragGestures(
-                        onDragEnd = {
-                            val velocity = velocityTracker.calculateVelocity()
-                            val velocityDpPerSec = with(density) { -velocity.y.toDp().value }
-                            onExpandDragEnd(velocityDpPerSec)
-                        },
-                        onDragCancel = {
-                            onExpandDragEnd(0f)
-                        }
-                    ) { change, dragAmount ->
-                        velocityTracker.addPosition(change.uptimeMillis, change.position)
+                        onDragEnd = { onExpandDragEnd() },
+                        onDragCancel = { onExpandDragEnd() }
+                    ) { _, dragAmount ->
                         val delta = -dragAmount / dragRangePx
                         onExpandDrag(delta)
                     }
                 } else {
                     // 展开状态：上拉折叠到周视图
                     detectVerticalDragGestures(
-                        onDragEnd = {
-                            val velocity = velocityTracker.calculateVelocity()
-                            val velocityDpPerSec = with(density) { -velocity.y.toDp().value }
-                            onDragEnd(velocityDpPerSec)
-                        },
-                        onDragCancel = {
-                            onDragEnd(0f)
-                        }
-                    ) { change, dragAmount ->
-                        velocityTracker.addPosition(change.uptimeMillis, change.position)
+                        onDragEnd = { onDragEnd() },
+                        onDragCancel = { onDragEnd() }
+                    ) { _, dragAmount ->
                         val delta = -dragAmount / dragRangePx
                         onDrag(delta)
                     }
