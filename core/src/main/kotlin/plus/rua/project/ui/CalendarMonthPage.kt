@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -24,6 +26,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
+import plus.rua.project.LunarCache
 import plus.rua.project.ShiftKind
 
 
@@ -42,7 +45,7 @@ import plus.rua.project.ShiftKind
  * @param rowHeightPx 从外层传入的锁定行高（像素），折叠过程中不变
  * @param effectiveWeeks 当前有效行数（含翻页插值），用于计算总高度
  * @param shiftKindAt 日期 → 个人轮班类型的查询闭包
- * @param showLegalHoliday 是否显示法定调休角标。详见 [DayCell] 的同名参数。
+ * @param showLegalHoliday 是否显示法定调休背景色。详见 [DayCell] 的同名参数。
  * @param onRowHeightMeasured 首次行高测量回调，外层据此锁定行高
  * @param modifier 外部布局修饰符
  */
@@ -66,6 +69,34 @@ fun CalendarMonthPage(
     }
     val density = LocalDensity.current
     val interactionSource = remember { MutableInteractionSource() }
+
+    val holidayBadges by produceState(
+        initialValue = emptyMap<LocalDate, String?>(),
+        key1 = days
+    ) {
+        val map = mutableMapOf<LocalDate, String?>()
+        for (dayData in days) {
+            val info = LunarCache.default.getOrCompute(dayData.date)
+            map[dayData.date] = info.holidayBadge
+        }
+        value = map
+    }
+
+    val holidayEdges = remember(holidayBadges, days) {
+        val map = mutableMapOf<LocalDate, HolidayEdgeInfo>()
+        for (dayData in days) {
+            val date = dayData.date
+            val badge = holidayBadges[date]
+            if (badge == null) continue
+            val prevBadge = holidayBadges[date.minus(DatePeriod(days = 1))]
+            val nextBadge = holidayBadges[date.plus(DatePeriod(days = 1))]
+            map[date] = HolidayEdgeInfo(
+                isStart = prevBadge != badge,
+                isEnd = nextBadge != badge
+            )
+        }
+        map
+    }
 
     val weeks = remember(days) { days.chunked(7) }
     val anchorIndex = remember(weeks, selectedDate) {
@@ -96,6 +127,7 @@ fun CalendarMonthPage(
                     today = today,
                     shiftKindAt = shiftKindAt,
                     showLegalHoliday = showLegalHoliday,
+                    holidayEdges = holidayEdges,
                     onDateClick = onDateClick,
                     onRowHeightMeasured = onRowHeightMeasured,
                     interactionSource = interactionSource
@@ -117,6 +149,7 @@ private fun WeekRow(
     today: LocalDate,
     shiftKindAt: (LocalDate) -> ShiftKind?,
     showLegalHoliday: Boolean,
+    holidayEdges: Map<LocalDate, HolidayEdgeInfo>,
     onDateClick: (LocalDate) -> Unit,
     onRowHeightMeasured: ((Int) -> Unit)?,
     interactionSource: MutableInteractionSource,
@@ -197,6 +230,7 @@ private fun WeekRow(
                         isToday = dayData.date == today,
                         shiftKind = shiftKindAt(dayData.date),
                         showLegalHoliday = showLegalHoliday,
+                        holidayEdgeInfo = holidayEdges[dayData.date],
                         onClick = { onDateClick(dayData.date) },
                         modifier = Modifier.weight(1f),
                         interactionSource = interactionSource
@@ -210,6 +244,17 @@ private fun WeekRow(
 private data class DayData(
     val date: LocalDate,
     val isCurrentMonth: Boolean
+)
+
+/**
+ * 法定假日在连续序列中的边缘状态，用于决定背景圆角。
+ *
+ * @param isStart 是否为同类型连续假日的开始（前一天不是同类型）
+ * @param isEnd 是否为同类型连续假日的结束（后一天不是同类型）
+ */
+data class HolidayEdgeInfo(
+    val isStart: Boolean,
+    val isEnd: Boolean
 )
 
 @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口

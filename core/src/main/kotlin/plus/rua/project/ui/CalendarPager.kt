@@ -32,7 +32,7 @@ import kotlin.math.abs
  * @param rowHeightPx 锁定行高（像素）
  * @param effectiveWeeks 当前有效行数（含翻页插值）
  * @param shiftKindAt 日期 → 个人轮班类型的查询闭包
- * @param showLegalHoliday 是否显示法定调休角标。详见 [DayCell] 的同名参数。
+ * @param showLegalHoliday 是否显示法定调休背景色。详见 [DayCell] 的同名参数。
  * @param onRowHeightMeasured 首次行高测量回调
  * @param pagerState 外层共享的 PagerState，用于保持翻页状态
  * @param modifier 外部布局修饰符

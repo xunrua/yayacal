@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,9 +52,10 @@ enum class DayCellState {
  * @param isSelected 是否为选中日期
  * @param isToday 是否为今天
  * @param shiftKind 个人轮班类型;null 表示不显示。与法定调休完全独立。
- * @param showLegalHoliday 是否显示法定调休角标。
- *   false(默认):排班放右上角,左上角空白,不显示法定调休。
- *   true:排班放左上角,法定调休放右上角(旧版布局)。
+ * @param showLegalHoliday 是否显示法定调休背景色。
+ *   false(默认):排班放右上角,不显示法定调休背景。
+ *   true:排班仍在右上角,法定假日以淡色背景显示("休"淡红,"班"淡蓝)。
+ * @param holidayEdgeInfo 假日在连续序列中的边缘状态,决定背景圆角。null 表示无假日。
  * @param onClick 点击回调
  * @param modifier 外部布局修饰符
  */
@@ -66,6 +67,7 @@ fun DayCell(
     isToday: Boolean,
     shiftKind: ShiftKind?,
     showLegalHoliday: Boolean,
+    holidayEdgeInfo: HolidayEdgeInfo? = null,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -158,16 +160,30 @@ fun DayCell(
         label = "lunarColor"
     )
 
-    val holidayBadgeColor = when (holidayBadge) {
-        "休" -> MaterialTheme.colorScheme.error
-        "班" -> MaterialTheme.colorScheme.primary
+    val holidayBgColor = when (holidayBadge) {
+        "休" -> MaterialTheme.colorScheme.error.copy(alpha = 0.10f)
+        "班" -> MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
         else -> Color.Transparent
     }
-    val holidayBadgeAlpha = if (isCurrentMonth) 1f else 0.38f
 
     Box(
         modifier = modifier.aspectRatio(1f)
     ) {
+        // 法定假日背景（最底层，与选中/今天状态叠加）
+        if (showLegalHoliday && holidayBadge != null) {
+            val holidayShape = when {
+                holidayEdgeInfo?.isStart == true && holidayEdgeInfo.isEnd -> RoundedCornerShape(8.dp)
+                holidayEdgeInfo?.isStart == true -> RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)
+                holidayEdgeInfo?.isEnd == true -> RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)
+                else -> RoundedCornerShape(0.dp)
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 0.5.dp)
+                    .background(holidayBgColor, holidayShape)
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -231,51 +247,16 @@ fun DayCell(
             }
             val shiftLabel = if (shiftKind == ShiftKind.WORK) "班" else "休"
             val shiftAlpha = if (isCurrentMonth) 1f else 0.38f
-            if (showLegalHoliday) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .zIndex(1f)
-                        .padding(top = 1.dp, start = 2.dp)
-                        .background(shiftAccentColor.copy(alpha = 0.12f), CircleShape)
-                        .size(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = shiftLabel,
-                        color = shiftAccentColor.copy(alpha = shiftAlpha),
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 9.sp
-                    )
-                }
-            } else {
-                Text(
-                    text = shiftLabel,
-                    color = shiftAccentColor.copy(alpha = shiftAlpha),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 9.sp,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .zIndex(1f)
-                        .padding(top = 1.dp, end = 2.dp)
-                )
-            }
-        }
-        if (showLegalHoliday && holidayBadge != null) {
             Text(
-                text = holidayBadge,
-                color = holidayBadgeColor.copy(alpha = holidayBadgeAlpha),
+                text = shiftLabel,
+                color = shiftAccentColor.copy(alpha = shiftAlpha),
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
                 lineHeight = 9.sp,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .zIndex(1f)
-                    .background(MaterialTheme.colorScheme.background)
                     .padding(top = 1.dp, end = 2.dp)
-                    .padding(horizontal = 2.dp)
             )
         }
     }
