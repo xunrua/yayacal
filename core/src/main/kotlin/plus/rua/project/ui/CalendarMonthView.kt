@@ -200,18 +200,39 @@ fun CalendarMonthView(
                                 .fillMaxSize()
                                 .padding(horizontal = HORIZONTAL_PADDING_DP.dp)
                         ) {
+                            val weekNumber = remember(selectedDate) {
+                                viewModel.getIsoWeekNumber(selectedDate)
+                            }
+                            val onToday = remember(viewModel, today) {
+                                { viewModel.selectDate(today) }
+                            }
                             MonthHeader(
                                 year = currentYear,
                                 month = currentMonth,
-                                weekNumber = viewModel.getIsoWeekNumber(selectedDate),
+                                weekNumber = weekNumber,
                                 showToday = selectedDate != today,
-                                onToday = {
-                                    viewModel.selectDate(today)
-                                }
+                                onToday = onToday
                             )
                             WeekdayHeader(
                                 modifier = Modifier.fillMaxWidth().padding(bottom = ROW_PADDING_DP.dp)
                             )
+                            val onDateClick = remember(viewModel) {
+                                { date: LocalDate -> viewModel.selectDate(date) }
+                            }
+                            val onMonthChanged = remember(viewModel, today) {
+                                { year: Int, month: Int ->
+                                    @Suppress("DEPRECATION")
+                                    val date = if (year == today.year && today.month.number == month) today
+                                    else LocalDate(year, month, 1)
+                                    viewModel.selectDate(date)
+                                }
+                            }
+                            val shiftKindAt = remember(viewModel) {
+                                { date: LocalDate -> viewModel.shiftKindAt(date) }
+                            }
+                            val onRowHeightMeasured = remember {
+                                { h: Int -> if (h > 0) rowHeightPx = h }
+                            }
                             with(sharedScope) {
                                 CalendarPagerArea(
                                     selectedDate = selectedDate,
@@ -221,17 +242,10 @@ fun CalendarMonthView(
                                     showLegalHoliday = showLegalHoliday,
                                     rowHeightPx = rowHeightPx,
                                     screenWidthPx = screenWidthPx,
-                                    onDateClick = { date -> viewModel.selectDate(date) },
-                                    onMonthChanged = { year, month ->
-                                        @Suppress("DEPRECATION")
-                                        val date = if (year == today.year && today.month.number == month) today
-                                            else LocalDate(year, month, 1)
-                                        viewModel.selectDate(date)
-                                    },
-                                    shiftKindAt = { date -> viewModel.shiftKindAt(date) },
-                                    onRowHeightMeasured = { h ->
-                                        if (h > 0) rowHeightPx = h
-                                    },
+                                    onDateClick = onDateClick,
+                                    onMonthChanged = onMonthChanged,
+                                    shiftKindAt = shiftKindAt,
+                                    onRowHeightMeasured = onRowHeightMeasured,
                                     pagerState = pagerState,
                                     modifier = Modifier
                                         .sharedElement(
