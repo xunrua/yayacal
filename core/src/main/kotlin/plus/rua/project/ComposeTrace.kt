@@ -1,12 +1,14 @@
 package plus.rua.project
 
 import android.os.Trace
+import plus.rua.project.shared.BuildConfig
 
 /**
  * Systrace 包装，用于录制 Compose 性能 trace。
- * Android 实际调用 android.os.Trace。
+ * 仅在 debug 构建中启用，release 构建中为空操作。
  */
 fun composeTraceBeginSection(name: String) {
+    if (!BuildConfig.DEBUG) return
     try {
         Trace.beginSection(name)
     } catch (_: RuntimeException) {
@@ -15,6 +17,7 @@ fun composeTraceBeginSection(name: String) {
 }
 
 fun composeTraceEndSection() {
+    if (!BuildConfig.DEBUG) return
     try {
         Trace.endSection()
     } catch (_: RuntimeException) {
