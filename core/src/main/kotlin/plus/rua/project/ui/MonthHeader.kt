@@ -19,9 +19,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,14 +29,11 @@ import androidx.compose.ui.unit.sp
 /**
  * 月份标题栏，显示"年月"文字和 ISO 周号。
  *
- * 点击年月文字弹出滚轮选择器，可快速跳转到任意年月。
- *
  * @param year 年份
  * @param month 月份（1-12）
  * @param weekNumber 当前 ISO 周号
  * @param showToday 是否显示「今天」按钮（当 selectedDate ≠ today 时）
  * @param onToday 点击「今天」按钮跳转今天
- * @param onMonthYearSelect 年月选择回调
  * @param modifier 外部布局修饰符
  */
 @Composable
@@ -49,23 +43,8 @@ fun MonthHeader(
     weekNumber: Int,
     showToday: Boolean,
     onToday: (() -> Unit)? = null,
-    onMonthYearSelect: ((year: Int, month: Int) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    var showPicker by remember { mutableStateOf(false) }
-
-    if (showPicker && onMonthYearSelect != null) {
-        MonthYearPickerDialog(
-            currentYear = year,
-            currentMonth = month,
-            onConfirm = { y, m ->
-                onMonthYearSelect(y, m)
-                showPicker = false
-            },
-            onDismiss = { showPicker = false }
-        )
-    }
-
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -87,13 +66,7 @@ fun MonthHeader(
             Text(
                 text = "${y}年${m}月",
                 color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.titleLarge,
-                modifier = if (onMonthYearSelect != null) {
-                    Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { showPicker = true }
-                        .padding(horizontal = 4.dp, vertical = 2.dp)
-                } else Modifier
+                style = MaterialTheme.typography.titleLarge
             )
         }
         Spacer(modifier = Modifier.width(6.dp))

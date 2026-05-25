@@ -207,21 +207,12 @@ fun CalendarMonthView(
                             val onToday = remember(viewModel, today) {
                                 { viewModel.selectDate(today) }
                             }
-                            val onMonthYearSelect = remember(viewModel, today) {
-                                { year: Int, month: Int ->
-                                    @Suppress("DEPRECATION")
-                                    val date = if (year == today.year && today.month.number == month) today
-                                    else LocalDate(year, month, 1)
-                                    viewModel.selectDate(date)
-                                }
-                            }
                             MonthHeader(
                                 year = currentYear,
                                 month = currentMonth,
                                 weekNumber = weekNumber,
                                 showToday = selectedDate != today,
-                                onToday = onToday,
-                                onMonthYearSelect = onMonthYearSelect
+                                onToday = onToday
                             )
                             WeekdayHeader(
                                 modifier = Modifier.fillMaxWidth().padding(bottom = ROW_PADDING_DP.dp)
