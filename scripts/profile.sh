@@ -192,16 +192,16 @@ REPORT_FILE="${LOGS_DIR}/report_${TIMESTAMP}.md"
 # 计算帧率相关数据
 FRAME_COUNT=$(grep -c "FrameTimeline" "${FRAMESTATS_FILE}" 2>/dev/null || echo "0")
 
-# 从 gfxinfo 提取关键指标
-TOTAL_FRAMES=$(grep "Total frames rendered:" "${FRAMESTATS_FILE}" | tail -1 | awk '{print $4}' || echo "N/A")
-JANKY_FRAMES=$(grep "Janky frames:" "${FRAMESTATS_FILE}" | tail -1 | awk '{print $3}' || echo "N/A")
-JANKY_PERCENT=$(grep "Janky frames:" "${FRAMESTATS_FILE}" | tail -1 | grep -oP '\(\K[^)]+' || echo "N/A")
-P50=$(grep "50th percentile:" "${FRAMESTATS_FILE}" | tail -1 | awk '{print $3}' || echo "N/A")
-P90=$(grep "90th percentile:" "${FRAMESTATS_FILE}" | tail -1 | awk '{print $3}' || echo "N/A")
-P99=$(grep "99th percentile:" "${FRAMESTATS_FILE}" | tail -1 | awk '{print $3}' || echo "N/A")
-SLOW_UI=$(grep "Number Slow UI thread:" "${FRAMESTATS_FILE}" | tail -1 | awk '{print $4}' || echo "N/A")
-SLOW_DRAW=$(grep "Number Slow issue draw commands:" "${FRAMESTATS_FILE}" | tail -1 | awk '{print $5}' || echo "N/A")
-HIGH_INPUT=$(grep "Number High input latency:" "${FRAMESTATS_FILE}" | tail -1 | awk '{print $4}' || echo "N/A")
+# 从 gfxinfo 提取关键指标（取第一个匹配，即整体统计而非 per-window）
+TOTAL_FRAMES=$(awk '/Total frames rendered:/{print $4; exit}' "${FRAMESTATS_FILE}")
+JANKY_FRAMES=$(awk '/Janky frames:/{print $3; exit}' "${FRAMESTATS_FILE}")
+JANKY_PERCENT=$(awk '/Janky frames:/{start=index($0,"(")+1; end=index($0,")"); print substr($0,start,end-start); exit}' "${FRAMESTATS_FILE}")
+P50=$(awk '/50th percentile:/{print $3; exit}' "${FRAMESTATS_FILE}")
+P90=$(awk '/90th percentile:/{print $3; exit}' "${FRAMESTATS_FILE}")
+P99=$(awk '/99th percentile:/{print $3; exit}' "${FRAMESTATS_FILE}")
+SLOW_UI=$(awk '/Number Slow UI thread:/{print $NF; exit}' "${FRAMESTATS_FILE}")
+SLOW_DRAW=$(awk '/Number Slow issue draw commands:/{print $NF; exit}' "${FRAMESTATS_FILE}")
+HIGH_INPUT=$(awk '/Number High input latency:/{print $NF; exit}' "${FRAMESTATS_FILE}")
 
 # 获取应用版本
 APP_VERSION=$(adb shell dumpsys package "${PACKAGE}" | grep versionName | head -1 | awk '{print $1}' | cut -d= -f2 2>/dev/null || echo "unknown")
@@ -210,11 +210,11 @@ APP_VERSION=$(adb shell dumpsys package "${PACKAGE}" | grep versionName | head -
 DEVICE_MODEL=$(adb shell getprop ro.product.model 2>/dev/null | tr -d '\r')
 ANDROID_VERSION=$(adb shell getprop ro.build.version.release 2>/dev/null | tr -d '\r')
 
-# 获取内存摘要
-TOTAL_PSS=$(grep "TOTAL PSS:" "${MEMINFO_FILE}" | awk '{print $3}' || echo "N/A")
-JAVA_HEAP=$(grep "Java Heap:" "${MEMINFO_FILE}" | head -1 | awk '{print $2}' || echo "N/A")
-NATIVE_HEAP=$(grep "Native Heap:" "${MEMINFO_FILE}" | head -1 | awk '{print $2}' || echo "N/A")
-GRAPHICS=$(grep "Graphics:" "${MEMINFO_FILE}" | head -1 | awk '{print $2}' || echo "N/A")
+# 获取内存摘要（$NF 取最后一个字段，避免中间空格导致的列错位）
+TOTAL_PSS=$(awk '/TOTAL PSS:/{print $3; exit}' "${MEMINFO_FILE}")
+JAVA_HEAP=$(awk '/^ *Java Heap:/{print $3; exit}' "${MEMINFO_FILE}")
+NATIVE_HEAP=$(awk '/^ *Native Heap:/{print $3; exit}' "${MEMINFO_FILE}")
+GRAPHICS=$(awk '/^ *Graphics:/{print $2; exit}' "${MEMINFO_FILE}")
 
 cat > "${REPORT_FILE}" <<EOF
 # YaYa 性能追踪报告
