@@ -66,6 +66,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
@@ -568,19 +569,21 @@ private fun BottomCardArea(
         label = "bottomCardSlide"
     )
 
-    // P0-J: 延迟一帧显示 BottomCard，避免 AnimatedGif 和 lunar 计算阻塞首帧
-    var frameCount by remember { mutableIntStateOf(0) }
-    androidx.compose.runtime.SideEffect { frameCount++ }
-    val shouldShow = frameCount >= 2
+    // 延迟一帧显示 BottomCard，避免 AnimatedGif 和 lunar 计算阻塞首帧
+    var hasLoaded by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(32)
+        hasLoaded = true
+    }
+    val shouldShow = hasLoaded
 
-    val selectedDate by viewModel.selectedDate.collectAsState()
-    val isCollapsed by viewModel.isCollapsed.collectAsState()
-    val shiftKind = viewModel.shiftKindAt(selectedDate)
+    val uiState by viewModel.uiState.collectAsState()
+    val shiftKind = viewModel.shiftKindAt(uiState.selectedDate)
 
     if (shouldShow) {
         BottomCard(
-            isCollapsed = isCollapsed,
-            selectedDate = selectedDate,
+            isCollapsed = uiState.isCollapsed,
+            selectedDate = uiState.selectedDate,
             today = today,
             shiftKind = shiftKind,
             onDrag = { delta -> viewModel.onDrag(delta) },
