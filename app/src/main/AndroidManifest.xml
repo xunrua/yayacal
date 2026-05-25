@@ -30,6 +30,10 @@
         <activity
             android:name=".ToolsActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".DateCheckerActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

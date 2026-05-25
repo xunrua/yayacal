@@ -1,14 +1,13 @@
 package plus.rua.project
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import plus.rua.project.ui.ToolsScreen
+import plus.rua.project.ui.DateCheckerScreen
 
-class ToolsActivity : ComponentActivity() {
+class DateCheckerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -27,19 +26,12 @@ class ToolsActivity : ComponentActivity() {
         }
 
         setContent {
-            ToolsScreen(
+            DateCheckerScreen(
                 onBack = {
                     finish()
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                         @Suppress("DEPRECATION")
                         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                    }
-                },
-                onNavigateToDateChecker = {
-                    startActivity(Intent(this, DateCheckerActivity::class.java))
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        @Suppress("DEPRECATION")
-                        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
                     }
                 }
             )
