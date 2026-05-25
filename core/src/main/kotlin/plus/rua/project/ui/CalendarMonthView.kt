@@ -193,7 +193,7 @@ fun CalendarMonthView(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(MaterialTheme.colorScheme.background)
-                            .alpha(if (layoutReady) 1f else 0f)
+                            .graphicsLayer { alpha = if (layoutReady) 1f else 0f }
                     ) {
                         Column(
                             modifier = Modifier
