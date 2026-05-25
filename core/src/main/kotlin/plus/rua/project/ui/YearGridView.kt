@@ -351,6 +351,19 @@ fun YearHeader(
     onYearChange: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showPicker by remember { mutableStateOf(false) }
+
+    if (showPicker) {
+        YearPickerDialog(
+            currentYear = year,
+            onConfirm = { y ->
+                onYearChange(y)
+                showPicker = false
+            },
+            onDismiss = { showPicker = false }
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -373,7 +386,11 @@ fun YearHeader(
                     text = "${y}年",
                     color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { showPicker = true }
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
