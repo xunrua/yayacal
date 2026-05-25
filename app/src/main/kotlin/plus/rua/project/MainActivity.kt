@@ -22,6 +22,13 @@ class MainActivity : ComponentActivity() {
                         @Suppress("DEPRECATION")
                         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
                     }
+                },
+                onNavigateToTools = {
+                    startActivity(Intent(this, ToolsActivity::class.java))
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        @Suppress("DEPRECATION")
+                        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+                    }
                 }
             )
         }

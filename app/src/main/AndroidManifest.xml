@@ -26,6 +26,10 @@
         <activity
             android:name=".LicensesActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".ToolsActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

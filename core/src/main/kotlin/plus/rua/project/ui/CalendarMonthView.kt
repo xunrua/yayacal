@@ -94,7 +94,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun CalendarMonthView(
     modifier: Modifier = Modifier,
-    onNavigateToAbout: () -> Unit = {}
+    onNavigateToAbout: () -> Unit = {},
+    onNavigateToTools: () -> Unit = {}
 ) {
     val viewModel = viewModel<CalendarViewModel>()
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
@@ -400,6 +401,14 @@ fun CalendarMonthView(
                         thickness = 1.dp,
                         color = MaterialTheme.colorScheme.outlineVariant,
                         modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                    MenuItem(
+                        text = "工具",
+                        selected = false,
+                        onClick = {
+                            isMenuExpanded = false
+                            onNavigateToTools()
+                        }
                     )
                     MenuItem(
                         text = "关于",
