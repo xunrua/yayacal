@@ -19,6 +19,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -309,7 +310,7 @@ fun CalendarMonthView(
                                 },
                                 sharedTransitionScope = sharedScope,
                                 animatedVisibilityScope = this@AnimatedContent,
-                                modifier = Modifier.alpha(crossFadeAlpha)
+                                modifier = Modifier.graphicsLayer { this.alpha = crossFadeAlpha }
                             )
                         }
                     }
@@ -570,6 +571,7 @@ private fun BottomCardArea(
         animationSpec = tween(350, delayMillis = 100, easing = FastOutSlowInEasing),
         label = "bottomCardSlide"
     )
+    val slideOffsetY = with(density) { (slideProgress * 200).dp.toPx() }
 
     // 延迟一帧显示 BottomCard，避免 AnimatedGif 和 lunar 计算阻塞首帧
     var hasLoaded by remember { mutableStateOf(false) }
@@ -594,8 +596,10 @@ private fun BottomCardArea(
             onExpandDragEnd = { viewModel.onExpandDragEnd() },
             dragRangePx = dragRangePx,
             modifier = modifier
-                .offset(y = with(density) { (slideProgress * 200).dp })
-                .alpha(1f - slideProgress)
+                .graphicsLayer {
+                    translationY = slideOffsetY
+                    this.alpha = 1f - slideProgress
+                }
         )
     }
 }
