@@ -247,17 +247,23 @@ fun DayCell(
             }
             val shiftLabel = if (shiftKind == ShiftKind.WORK) "班" else "休"
             val shiftAlpha = if (isCurrentMonth) 1f else 0.38f
-            Text(
-                text = shiftLabel,
-                color = shiftAccentColor.copy(alpha = shiftAlpha),
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                lineHeight = 9.sp,
+            Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .zIndex(1f)
                     .padding(top = 1.dp, end = 2.dp)
-            )
+                    .background(MaterialTheme.colorScheme.background, CircleShape)
+                    .padding(horizontal = 3.dp, vertical = 2.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = shiftLabel,
+                    color = shiftAccentColor.copy(alpha = shiftAlpha),
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 9.sp
+                )
+            }
         }
     }
 }
