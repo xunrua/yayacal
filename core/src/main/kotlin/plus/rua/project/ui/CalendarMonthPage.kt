@@ -21,6 +21,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import android.util.Log
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
@@ -29,6 +30,8 @@ import kotlinx.datetime.plus
 import plus.rua.project.DayCellInfo
 import plus.rua.project.LunarCache
 import plus.rua.project.ShiftKind
+
+private const val TAG_CMP = "CalendarExpandAnim"
 
 
 /**
@@ -185,7 +188,7 @@ private fun WeekRow(
             !hasAnchor -> weekIndex * h - collapseProgress * weeksSize * h
             isAnchor -> anchorIndex * h * (1f - phase1)
             isAbove -> weekIndex * h - phase1 * anchorIndex * h
-            isBelow -> weekIndex * h - phase1 * anchorIndex * h - phase2 * belowRowsHeight
+            isBelow -> weekIndex * h - phase1 * anchorIndex * h
             else -> weekIndex * h
         }
     } else 0f
@@ -196,6 +199,10 @@ private fun WeekRow(
         isAbove -> (1f - phase1).coerceIn(0f, 1f)
         isBelow -> (1f - phase2).coerceIn(0f, 1f)
         else -> 1f
+    }
+
+    if (isAnchor || isBelow) {
+        Log.d(TAG_CMP, "WeekRow[$weekIndex]: isAnchor=$isAnchor isAbove=$isAbove isBelow=$isBelow phase1=$phase1 phase2=$phase2 yOffsetPx=$yOffsetPx rowAlpha=$rowAlpha collapseProgress=$collapseProgress")
     }
 
     if (rowAlpha > 0.01f) {

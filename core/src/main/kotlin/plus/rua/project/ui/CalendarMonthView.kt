@@ -520,20 +520,66 @@ private fun CalendarPagerArea(
         modifier
     }
 
-    CalendarPager(
-        selectedDate = selectedDate,
-        today = today,
-        onDateClick = onDateClick,
-        onMonthChanged = onMonthChanged,
-        collapseProgress = collapseProgress,
-        rowHeightPx = rowHeightPx,
-        effectiveWeeks = effectiveWeeks,
-        shiftKindAt = shiftKindAt,
-        showLegalHoliday = showLegalHoliday,
-        onRowHeightMeasured = onRowHeightMeasured,
-        pagerState = pagerState,
+    // 延迟切换：等折叠 spring 动画完全稳定后再切到 WeekPager，避免视觉跳跃
+    var showWeekPager by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isCollapsed, collapseProgress) {
+        if (isCollapsed && collapseProgress >= 0.999f) {
+            delay(50)
+            showWeekPager = true
+        } else if (!isCollapsed) {
+            showWeekPager = false
+        }
+    }
+
+    AnimatedContent(
+        targetState = showWeekPager,
+        transitionSpec = { fadeIn(tween(80)) togetherWith fadeOut(tween(80)) },
+        label = "pager_switch",
         modifier = pagerModifier
-    )
+    ) { useWeekPager ->
+        if (useWeekPager) {
+            WeekPager(
+                selectedDate = selectedDate,
+                today = today,
+                onDateClick = onDateClick,
+                onWeekChanged = { weekMonday ->
+                    val weekSunday = weekMonday.plus(DatePeriod(days = 6))
+                    val date = when {
+                        today in weekMonday..weekSunday -> today
+                        weekMonday.month != weekSunday.month -> {
+                            if (weekMonday < selectedDate) {
+                                @Suppress("DEPRECATION")
+                                LocalDate(weekSunday.year, weekSunday.month.number, 1)
+                            } else {
+                                weekMonday
+                            }
+                        }
+                        else -> weekMonday
+                    }
+                    onDateClick(date)
+                },
+                shiftKindAt = shiftKindAt,
+                showLegalHoliday = showLegalHoliday,
+                modifier = Modifier
+            )
+        } else {
+            CalendarPager(
+                selectedDate = selectedDate,
+                today = today,
+                onDateClick = onDateClick,
+                onMonthChanged = onMonthChanged,
+                collapseProgress = collapseProgress,
+                rowHeightPx = rowHeightPx,
+                effectiveWeeks = effectiveWeeks,
+                shiftKindAt = shiftKindAt,
+                showLegalHoliday = showLegalHoliday,
+                onRowHeightMeasured = onRowHeightMeasured,
+                pagerState = pagerState,
+                modifier = Modifier
+            )
+        }
+    }
 }
 
 @Composable

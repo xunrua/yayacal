@@ -20,7 +20,10 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import plus.rua.project.ui.COLLAPSE_THRESHOLD
 import plus.rua.project.ui.getMonthGridInfo
+import android.util.Log
 import kotlin.time.Clock
+
+private const val TAG_VM = "CalendarExpand"
 
 /**
  * 日历日期数据，用于网格单元格渲染。
@@ -285,7 +288,9 @@ class CalendarViewModel(
      * @param delta 拖拽增量，已归一化到 [0,1] 区间
      */
     fun onExpandDrag(delta: Float) {
+        val old = _collapseProgress.value
         _collapseProgress.value = (_collapseProgress.value + delta).coerceIn(0f, 1f)
+        Log.d(TAG_VM, "onExpandDrag: delta=$delta old=$old new=${_collapseProgress.value}")
     }
 
     /**
@@ -295,13 +300,16 @@ class CalendarViewModel(
      */
     fun onExpandDragEnd() {
         val progress = _collapseProgress.value
-        if (progress < (1 - COLLAPSE_THRESHOLD)) {
+        val result = if (progress < (1 - COLLAPSE_THRESHOLD)) {
             _isCollapsed.value = false
             _collapseProgress.value = 0f
+            "EXPANDED"
         } else {
             _isCollapsed.value = true
             _collapseProgress.value = 1f
+            "COLLAPSED (bounce back)"
         }
+        Log.d(TAG_VM, "onExpandDragEnd: progress=$progress threshold=${1 - COLLAPSE_THRESHOLD} result=$result")
     }
 
     /**
