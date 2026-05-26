@@ -1,8 +1,10 @@
 package plus.rua.project.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
@@ -89,6 +91,7 @@ fun WeekPager(
             modifier = Modifier
                 .alpha(alpha)
                 .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(vertical = ROW_PADDING_DP.dp)
         ) {
             (0 until 7).forEach { dayOffset ->

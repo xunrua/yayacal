@@ -520,48 +520,20 @@ private fun CalendarPagerArea(
         modifier
     }
 
-    if (isCollapsed && collapseProgress >= 1f) {
-        WeekPager(
-            selectedDate = selectedDate,
-            today = today,
-            onDateClick = onDateClick,
-            onWeekChanged = { weekMonday ->
-                val weekSunday = weekMonday.plus(DatePeriod(days = 6))
-                val date = when {
-                    today in weekMonday..weekSunday -> today
-                    weekMonday.month != weekSunday.month -> {
-                        if (weekMonday < selectedDate) {
-                            @Suppress("DEPRECATION") // monthNumber 无替代 API
-                            LocalDate(weekSunday.year, weekSunday.month.number, 1)
-                        } else {
-                            weekMonday
-                        }
-                    }
-
-                    else -> weekMonday
-                }
-                onDateClick(date)
-            },
-            shiftKindAt = shiftKindAt,
-            showLegalHoliday = showLegalHoliday,
-            modifier = pagerModifier
-        )
-    } else {
-        CalendarPager(
-            selectedDate = selectedDate,
-            today = today,
-            onDateClick = onDateClick,
-            onMonthChanged = onMonthChanged,
-            collapseProgress = collapseProgress,
-            rowHeightPx = rowHeightPx,
-            effectiveWeeks = effectiveWeeks,
-            shiftKindAt = shiftKindAt,
-            showLegalHoliday = showLegalHoliday,
-            onRowHeightMeasured = onRowHeightMeasured,
-            pagerState = pagerState,
-            modifier = pagerModifier
-        )
-    }
+    CalendarPager(
+        selectedDate = selectedDate,
+        today = today,
+        onDateClick = onDateClick,
+        onMonthChanged = onMonthChanged,
+        collapseProgress = collapseProgress,
+        rowHeightPx = rowHeightPx,
+        effectiveWeeks = effectiveWeeks,
+        shiftKindAt = shiftKindAt,
+        showLegalHoliday = showLegalHoliday,
+        onRowHeightMeasured = onRowHeightMeasured,
+        pagerState = pagerState,
+        modifier = pagerModifier
+    )
 }
 
 @Composable
