@@ -20,7 +20,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import plus.rua.project.ui.COLLAPSE_THRESHOLD
 import plus.rua.project.ui.getMonthGridInfo
-import android.util.Log
+import plus.rua.project.util.logd
 import kotlin.time.Clock
 
 private const val TAG_VM = "CalendarExpand"
@@ -210,17 +210,27 @@ class CalendarViewModel(
      * 当前视图被直接移除；动画只作用在目标视图的 scale/alpha 上。
      */
     fun toggleYearView() {
+        val t0 = System.nanoTime()
         if (_isYearView.value) {
+            logd(TAG_VM, "[toggleYearView] ===== START Year→Month t=$t0 =====")
             composeTraceBeginSection("YearView→MonthView")
             _yearViewProgress.value = 0f
+            logd(TAG_VM, "[toggleYearView] yearViewProgress=0 dt=${(System.nanoTime() - t0) / 1_000_000}ms")
             _isYearView.value = false
+            logd(TAG_VM, "[toggleYearView] isYearView=false dt=${(System.nanoTime() - t0) / 1_000_000}ms")
             composeTraceEndSection()
+            logd(TAG_VM, "[toggleYearView] ===== END Year→Month total=${(System.nanoTime() - t0) / 1_000_000}ms =====")
         } else {
+            logd(TAG_VM, "[toggleYearView] ===== START Month→Year t=$t0 =====")
             composeTraceBeginSection("MonthView→YearView")
             _yearViewYear.value = _selectedDate.value.year
+            logd(TAG_VM, "[toggleYearView] yearViewYear=${_yearViewYear.value} dt=${(System.nanoTime() - t0) / 1_000_000}ms")
             _yearViewProgress.value = 1f
+            logd(TAG_VM, "[toggleYearView] yearViewProgress=1 dt=${(System.nanoTime() - t0) / 1_000_000}ms")
             _isYearView.value = true
+            logd(TAG_VM, "[toggleYearView] isYearView=true dt=${(System.nanoTime() - t0) / 1_000_000}ms")
             composeTraceEndSection()
+            logd(TAG_VM, "[toggleYearView] ===== END Month→Year total=${(System.nanoTime() - t0) / 1_000_000}ms =====")
         }
     }
 
@@ -236,13 +246,20 @@ class CalendarViewModel(
      */
     @Suppress("DEPRECATION") // monthNumber 无替代 API
     fun selectMonthFromYearView(month: Int) {
+        val t0 = System.nanoTime()
+        logd(TAG_VM, "[selectMonthFromYearView] ===== START month=$month t=$t0 =====")
         composeTraceBeginSection("YearView:SelectMonth")
         val date = if (_yearViewYear.value == today.year && today.month.number == month) today
         else LocalDate(_yearViewYear.value, month, 1)
+        logd(TAG_VM, "[selectMonthFromYearView] targetDate=$date dt=${(System.nanoTime() - t0) / 1_000_000}ms")
         _selectedDate.value = date
+        logd(TAG_VM, "[selectMonthFromYearView] selectedDate set dt=${(System.nanoTime() - t0) / 1_000_000}ms")
         _isYearView.value = false
+        logd(TAG_VM, "[selectMonthFromYearView] isYearView=false dt=${(System.nanoTime() - t0) / 1_000_000}ms")
         _yearViewProgress.value = 0f
+        logd(TAG_VM, "[selectMonthFromYearView] yearViewProgress=0 dt=${(System.nanoTime() - t0) / 1_000_000}ms")
         composeTraceEndSection()
+        logd(TAG_VM, "[selectMonthFromYearView] ===== END total=${(System.nanoTime() - t0) / 1_000_000}ms =====")
     }
 
     fun incrementYear() {
@@ -290,7 +307,7 @@ class CalendarViewModel(
     fun onExpandDrag(delta: Float) {
         val old = _collapseProgress.value
         _collapseProgress.value = (_collapseProgress.value + delta).coerceIn(0f, 1f)
-        Log.d(TAG_VM, "onExpandDrag: delta=$delta old=$old new=${_collapseProgress.value}")
+        logd(TAG_VM, "onExpandDrag: delta=$delta old=$old new=${_collapseProgress.value}")
     }
 
     /**
@@ -309,7 +326,7 @@ class CalendarViewModel(
             _collapseProgress.value = 1f
             "COLLAPSED (bounce back)"
         }
-        Log.d(TAG_VM, "onExpandDragEnd: progress=$progress threshold=${1 - COLLAPSE_THRESHOLD} result=$result")
+        logd(TAG_VM, "onExpandDragEnd: progress=$progress threshold=${1 - COLLAPSE_THRESHOLD} result=$result")
     }
 
     /**

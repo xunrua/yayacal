@@ -21,7 +21,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import android.util.Log
+import plus.rua.project.util.logd
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
@@ -109,13 +109,13 @@ fun CalendarMonthPage(
 
     // 全局动画参数日志（每次重组）
     val pageFrameNs = System.nanoTime()
-    Log.d(
-        TAG_CMP,
-        "Page[$year-$month]: anchorIndex=$anchorIndex weeksSize=${weeks.size} " +
+    val totalCells = weeks.size * 7
+    logd(TAG_CMP) {
+        "Page[$year-$month]: anchorIndex=$anchorIndex weeksSize=${weeks.size} totalCells=$totalCells " +
             "phase1End=${if (anchorIndex > 0 && weeks.size > 1) anchorIndex.toFloat() / (weeks.size - 1) else 0f} " +
             "effectiveWeeks=$effectiveWeeks rowHeightPx=$rowHeightPx " +
-            "collapseProgress=$collapseProgress frameNs=$pageFrameNs"
-    )
+            "collapseProgress=$collapseProgress lunarMapSize=${lunarDataMap.size} frameNs=$pageFrameNs"
+    }
 
     val totalHeightDp = if (rowHeightPx > 0) {
         val h = rowHeightPx.toFloat()
@@ -213,8 +213,7 @@ private fun WeekRow(
     }
 
     val frameTimeNs = System.nanoTime()
-    Log.d(
-        TAG_CMP,
+    logd(TAG_CMP) {
         "WeekRow[$weekIndex]: " +
             "isAnchor=$isAnchor isAbove=$isAbove isBelow=$isBelow " +
             "phase1=$phase1 phase2=$phase2 phase1End=$phase1End " +
@@ -222,7 +221,7 @@ private fun WeekRow(
             "yOffsetPx=$yOffsetPx rowAlpha=$rowAlpha " +
             "collapseProgress=$collapseProgress " +
             "frameNs=$frameTimeNs"
-    )
+    }
 
     if (rowAlpha > 0.01f) {
         Row(

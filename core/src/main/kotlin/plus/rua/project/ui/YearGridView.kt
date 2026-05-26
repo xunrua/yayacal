@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import plus.rua.project.util.logd
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -87,6 +88,14 @@ fun YearGridView(
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier
 ) {
+    val enterT = System.nanoTime()
+    logd("AnimLog", "[YearGridView] ★★★ ENTER year=$year selectedMonth=$selectedMonth t=$enterT")
+    androidx.compose.runtime.DisposableEffect(year) {
+        logd("AnimLog", "[YearGridView] DisposableEffect attached year=$year")
+        onDispose {
+            logd("AnimLog", "[YearGridView] ★★★ LEAVE year=$year alive=${(System.nanoTime() - enterT) / 1_000_000}ms")
+        }
+    }
     composeTraceBeginSection("YearGridView:$year")
 
     // P0-F: 主题色在 YearGridView 级别一次性读取并缓存
@@ -165,6 +174,9 @@ fun YearGridView(
                     (0 until 3).forEach { col ->
                         val month = row * 3 + col + 1
                         with(sharedTransitionScope) {
+                            // P0: 缓存 sharedElement tween，避免每次重组创建新实例
+                            val miniMonthTween = remember { tween<androidx.compose.ui.geometry.Rect>(400, easing = FastOutSlowInEasing) }
+                            val seKey = "month_grid_${year}_$month"
                             MiniMonth(
                                 year = year,
                                 month = month,
@@ -180,12 +192,10 @@ fun YearGridView(
                                     .weight(1f)
                                     .sharedElement(
                                         sharedContentState = rememberSharedContentState(
-                                            key = "month_grid_${year}_$month"
+                                            key = seKey
                                         ),
                                         animatedVisibilityScope = animatedVisibilityScope,
-                                        boundsTransform = { _, _ ->
-                                            tween(400, easing = FastOutSlowInEasing)
-                                        }
+                                        boundsTransform = { _, _ -> miniMonthTween }
                                     )
                             )
                         }

@@ -82,7 +82,7 @@ import plus.rua.project.composeTraceEndSection
 import kotlin.math.abs
 import kotlin.time.Clock
 import androidx.lifecycle.viewmodel.compose.viewModel
-import android.util.Log
+import plus.rua.project.util.logd
 
 /**
  * 日历主界面，包含月/周视图切换、折叠动画和年视图共享元素转场。
@@ -119,8 +119,13 @@ fun CalendarMonthView(
         animationSpec = spring(stiffness = Spring.StiffnessMedium),
         label = "collapseProgress"
     )
+    var lastLoggedCollapse by remember { mutableStateOf(-1f) }
     SideEffect {
-        Log.d("CalendarExpandAnim", "View: target=$collapseProgress animated=$animatedCollapseProgress isCollapsed=$isCollapsed")
+        if (kotlin.math.abs(lastLoggedCollapse - collapseProgress) > 0.001f) {
+            lastLoggedCollapse = collapseProgress
+            logd("AnimLog", "[Collapse] target=$collapseProgress animated=$animatedCollapseProgress isCollapsed=$isCollapsed")
+        }
+        logd("AnimLog", "[MonthView] isYearView=$isYearView isCollapsed=$isCollapsed collapseProgress=$collapseProgress animated=$animatedCollapseProgress selectedDate=$selectedDate yearViewYear=$yearViewYear")
     }
 
     val density = LocalDensity.current
@@ -178,6 +183,13 @@ fun CalendarMonthView(
     ) {
         SharedTransitionLayout {
             val sharedScope = this
+            var lastLoggedTargetState by remember { mutableStateOf(false) }
+            SideEffect {
+                if (lastLoggedTargetState != isYearView) {
+                    lastLoggedTargetState = isYearView
+                    logd("AnimLog", "[AnimatedContent] ★ targetState CHANGE isYearView=$isYearView t=${System.nanoTime()}")
+                }
+            }
             AnimatedContent(
                 targetState = isYearView,
                 label = "month_year_transition",
@@ -191,6 +203,13 @@ fun CalendarMonthView(
                 modifier = Modifier.fillMaxSize()
             ) { yearViewActive ->
                 if (!yearViewActive) {
+                    androidx.compose.runtime.DisposableEffect(Unit) {
+                        val t = System.nanoTime()
+                        logd("AnimLog", "[MonthView] ★★★ ENTER composable t=$t")
+                        onDispose {
+                            logd("AnimLog", "[MonthView] ★★★ LEAVE composable alive=${(System.nanoTime() - t) / 1_000_000}ms")
+                        }
+                    }
                     composeTraceBeginSection("MonthView:Compose")
                     composeTraceBeginSection("CalendarPagerArea")
                     val layoutReady = rowHeightPx > 0
@@ -239,6 +258,8 @@ fun CalendarMonthView(
                                 { h: Int -> if (h > 0) rowHeightPx = h }
                             }
                             with(sharedScope) {
+                                // P0: 缓存 sharedElement tween，避免每次重组创建新实例导致动画重新计算
+                                val sharedTween = remember { tween<androidx.compose.ui.geometry.Rect>(400, easing = FastOutSlowInEasing) }
                                 CalendarPagerArea(
                                     selectedDate = selectedDate,
                                     today = today,
@@ -257,9 +278,7 @@ fun CalendarMonthView(
                                                 key = "month_grid_${currentYear}_${currentMonth}"
                                             ),
                                             animatedVisibilityScope = this@AnimatedContent,
-                                            boundsTransform = { _, _ ->
-                                                tween(400, easing = FastOutSlowInEasing)
-                                            }
+                                            boundsTransform = { _, _ -> sharedTween }
                                         )
                                         .clipToBounds()
                                 )
@@ -276,6 +295,13 @@ fun CalendarMonthView(
                     composeTraceEndSection()
                     composeTraceEndSection()
                 } else {
+                    androidx.compose.runtime.DisposableEffect(Unit) {
+                        val t = System.nanoTime()
+                        logd("AnimLog", "[YearView] ★★★ ENTER composable t=$t")
+                        onDispose {
+                            logd("AnimLog", "[YearView] ★★★ LEAVE composable alive=${(System.nanoTime() - t) / 1_000_000}ms")
+                        }
+                    }
                     composeTraceBeginSection("YearView:Compose")
                     Column(
                         modifier = Modifier
@@ -294,6 +320,13 @@ fun CalendarMonthView(
                                 }
                             }
                         )
+                        var lastLoggedYearPage by remember { mutableIntStateOf(-1) }
+                        SideEffect {
+                            if (lastLoggedYearPage != yearPagerState.currentPage) {
+                                lastLoggedYearPage = yearPagerState.currentPage
+                                logd("AnimLog", "[YearPager] page=${yearPagerState.currentPage} settledPage=${yearPagerState.settledPage} offset=${yearPagerState.currentPageOffsetFraction}")
+                            }
+                        }
                         HorizontalPager(
                             state = yearPagerState,
                             beyondViewportPageCount = 0,
@@ -302,19 +335,21 @@ fun CalendarMonthView(
                                 .fillMaxWidth()
                                 .weight(1f)
                         ) { page ->
-                            val pageOffset = abs(yearPagerState.currentPageOffsetFraction)
-                            val isCurrentPage = page == yearPagerState.currentPage
-                            val crossFadeAlpha = if (isCurrentPage) {
-                                1f - pageOffset
-                            } else {
-                                pageOffset
+                            // P0: 稳定 pageYear 计算，避免 settledPage/yearViewYear 不同步导致抖动
+                            val pageYear = remember(page, yearViewYear, yearPagerState.settledPage) {
+                                yearViewYear + (page - yearPagerState.settledPage)
                             }
-                            val pageYear = yearViewYear + (page - yearPagerState.settledPage)
+                            val isCurrentPage = page == yearPagerState.currentPage
+                            if (isCurrentPage) {
+                                logd("AnimLog") { "[YearPager] Compose page=$page year=$pageYear" }
+                            }
                             YearGridView(
                                 year = pageYear,
                                 selectedMonth = if (pageYear == currentYear) currentMonth else 0,
                                 today = today,
                                 onMonthClick = { month ->
+                                    val clickT = System.nanoTime()
+                                    logd("AnimLog") { "[YearGridView] MonthClick month=$month year=$pageYear t=$clickT" }
                                     viewModel.selectMonthFromYearView(month)
                                     @Suppress("DEPRECATION") // monthNumber 无替代 API
                                     val targetPage = yearMonthToPage(
@@ -322,12 +357,13 @@ fun CalendarMonthView(
                                         today.year, today.month.number
                                     )
                                     if (targetPage != pagerState.currentPage) {
+                                        logd("AnimLog") { "[YearPager] scrollToPage target=$targetPage" }
                                         coroutineScope.launch { pagerState.scrollToPage(targetPage) }
                                     }
                                 },
                                 sharedTransitionScope = sharedScope,
                                 animatedVisibilityScope = this@AnimatedContent,
-                                modifier = Modifier.alpha(crossFadeAlpha)
+                                modifier = Modifier
                             )
                         }
                     }
@@ -477,12 +513,13 @@ private fun CalendarPagerArea(
     pagerState: PagerState,
     modifier: Modifier = Modifier
 ) {
+    val t0 = System.nanoTime()
     val density = LocalDensity.current
 
     val interpolatedWeeks by remember {
         derivedStateOf {
             val fraction = pagerState.currentPageOffsetFraction
-            if (abs(fraction) > OFFSET_FRACTION_THRESHOLD) {
+            val result = if (abs(fraction) > OFFSET_FRACTION_THRESHOLD) {
                 val cp = pagerState.currentPage
                 val baseWeeks = calculateWeeksCountForPage(cp, today)
                 val targetPage = cp + if (fraction > 0) 1 else -1
@@ -491,6 +528,8 @@ private fun CalendarPagerArea(
             } else {
                 calculateWeeksCountForPage(pagerState.currentPage, today).toFloat()
             }
+            logd("AnimLog", "[PagerArea] interpolatedWeeks=$result fraction=$fraction page=${pagerState.currentPage}")
+            result
         }
     }
 
@@ -513,6 +552,8 @@ private fun CalendarPagerArea(
             (rowH * effectiveWeeks).toInt()
         }
     } else 0
+
+    logd("AnimLog", "[PagerArea] gridHeightPx=$gridHeightPx effectiveRowHeightPx=$effectiveRowHeightPx effectiveWeeks=$effectiveWeeks collapseProgress=$collapseProgress screenW=$screenWidthPx rowH=$rowHeightPx dt=${(System.nanoTime() - t0) / 1_000_000}ms")
 
     val pagerModifier = if (rowHeightPx > 0 && gridHeightPx > 0) {
         Modifier
@@ -559,16 +600,26 @@ private fun BottomCardArea(
         animationSpec = tween(350, delayMillis = 100, easing = FastOutSlowInEasing),
         label = "bottomCardSlide"
     )
+    var lastLoggedSlide by remember { mutableStateOf(-1f) }
+    SideEffect {
+        if (kotlin.math.abs(lastLoggedSlide - slideProgress) > 0.001f) {
+            lastLoggedSlide = slideProgress
+            logd("AnimLog", "[BottomCard] slideProgress=$slideProgress isYearView=$isYearView")
+        }
+    }
     // 延迟一帧显示 BottomCard，避免 AnimatedGif 和 lunar 计算阻塞首帧
     var hasLoaded by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(32)
         hasLoaded = true
+        logd("AnimLog", "[BottomCard] hasLoaded=true after delay")
     }
     val shouldShow = hasLoaded
 
     val uiState by viewModel.uiState.collectAsState()
     val shiftKind = viewModel.shiftKindAt(uiState.selectedDate)
+
+    logd("AnimLog", "[BottomCard] shouldShow=$shouldShow isYearView=$isYearView slideProgress=$slideProgress dragRangePx=$dragRangePx rowHeightPx=$rowHeightPx")
 
     if (shouldShow) {
         BottomCard(
