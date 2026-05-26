@@ -106,6 +106,17 @@ fun CalendarMonthPage(
     val anchorIndex = remember(year, month, selectedDate) {
         weeks.indexOfFirst { week -> week.any { it.date == selectedDate } }
     }
+
+    // 全局动画参数日志（每次重组）
+    val pageFrameNs = System.nanoTime()
+    Log.d(
+        TAG_CMP,
+        "Page[$year-$month]: anchorIndex=$anchorIndex weeksSize=${weeks.size} " +
+            "phase1End=${if (anchorIndex > 0 && weeks.size > 1) anchorIndex.toFloat() / (weeks.size - 1) else 0f} " +
+            "effectiveWeeks=$effectiveWeeks rowHeightPx=$rowHeightPx " +
+            "collapseProgress=$collapseProgress frameNs=$pageFrameNs"
+    )
+
     val totalHeightDp = if (rowHeightPx > 0) {
         val h = rowHeightPx.toFloat()
         val totalPx = h * (1 + (effectiveWeeks - 1) * (1f - collapseProgress))
@@ -188,7 +199,7 @@ private fun WeekRow(
             !hasAnchor -> weekIndex * h - collapseProgress * weeksSize * h
             isAnchor -> anchorIndex * h * (1f - phase1)
             isAbove -> weekIndex * h - phase1 * anchorIndex * h
-            isBelow -> weekIndex * h - phase1 * anchorIndex * h
+            isBelow -> weekIndex * h - phase1 * anchorIndex * h - phase2 * belowRowsHeight
             else -> weekIndex * h
         }
     } else 0f
@@ -201,9 +212,17 @@ private fun WeekRow(
         else -> 1f
     }
 
-    if (isAnchor || isBelow) {
-        Log.d(TAG_CMP, "WeekRow[$weekIndex]: isAnchor=$isAnchor isAbove=$isAbove isBelow=$isBelow phase1=$phase1 phase2=$phase2 yOffsetPx=$yOffsetPx rowAlpha=$rowAlpha collapseProgress=$collapseProgress")
-    }
+    val frameTimeNs = System.nanoTime()
+    Log.d(
+        TAG_CMP,
+        "WeekRow[$weekIndex]: " +
+            "isAnchor=$isAnchor isAbove=$isAbove isBelow=$isBelow " +
+            "phase1=$phase1 phase2=$phase2 phase1End=$phase1End " +
+            "belowRowsHeight=$belowRowsHeight rowHeightPx=$rowHeightPx " +
+            "yOffsetPx=$yOffsetPx rowAlpha=$rowAlpha " +
+            "collapseProgress=$collapseProgress " +
+            "frameNs=$frameTimeNs"
+    )
 
     if (rowAlpha > 0.01f) {
         Row(

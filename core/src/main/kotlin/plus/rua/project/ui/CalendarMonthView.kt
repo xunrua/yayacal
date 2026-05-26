@@ -48,6 +48,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -69,7 +70,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
@@ -82,6 +82,7 @@ import plus.rua.project.composeTraceEndSection
 import kotlin.math.abs
 import kotlin.time.Clock
 import androidx.lifecycle.viewmodel.compose.viewModel
+import android.util.Log
 
 /**
  * 日历主界面，包含月/周视图切换、折叠动画和年视图共享元素转场。
@@ -118,6 +119,9 @@ fun CalendarMonthView(
         animationSpec = spring(stiffness = Spring.StiffnessMedium),
         label = "collapseProgress"
     )
+    SideEffect {
+        Log.d("CalendarExpandAnim", "View: target=$collapseProgress animated=$animatedCollapseProgress isCollapsed=$isCollapsed")
+    }
 
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
@@ -238,7 +242,6 @@ fun CalendarMonthView(
                                 CalendarPagerArea(
                                     selectedDate = selectedDate,
                                     today = today,
-                                    isCollapsed = isCollapsed,
                                     collapseProgress = animatedCollapseProgress,
                                     showLegalHoliday = showLegalHoliday,
                                     rowHeightPx = rowHeightPx,
@@ -463,7 +466,6 @@ private fun MenuIcon(color: Color, modifier: Modifier = Modifier) {
 private fun CalendarPagerArea(
     selectedDate: LocalDate,
     today: LocalDate,
-    isCollapsed: Boolean,
     collapseProgress: Float,
     showLegalHoliday: Boolean,
     rowHeightPx: Int,
@@ -520,66 +522,20 @@ private fun CalendarPagerArea(
         modifier
     }
 
-    // 延迟切换：等折叠 spring 动画完全稳定后再切到 WeekPager，避免视觉跳跃
-    var showWeekPager by remember { mutableStateOf(false) }
-
-    LaunchedEffect(isCollapsed, collapseProgress) {
-        if (isCollapsed && collapseProgress >= 0.999f) {
-            delay(50)
-            showWeekPager = true
-        } else if (!isCollapsed) {
-            showWeekPager = false
-        }
-    }
-
-    AnimatedContent(
-        targetState = showWeekPager,
-        transitionSpec = { fadeIn(tween(80)) togetherWith fadeOut(tween(80)) },
-        label = "pager_switch",
+    CalendarPager(
+        selectedDate = selectedDate,
+        today = today,
+        onDateClick = onDateClick,
+        onMonthChanged = onMonthChanged,
+        collapseProgress = collapseProgress,
+        rowHeightPx = rowHeightPx,
+        effectiveWeeks = effectiveWeeks,
+        shiftKindAt = shiftKindAt,
+        showLegalHoliday = showLegalHoliday,
+        onRowHeightMeasured = onRowHeightMeasured,
+        pagerState = pagerState,
         modifier = pagerModifier
-    ) { useWeekPager ->
-        if (useWeekPager) {
-            WeekPager(
-                selectedDate = selectedDate,
-                today = today,
-                onDateClick = onDateClick,
-                onWeekChanged = { weekMonday ->
-                    val weekSunday = weekMonday.plus(DatePeriod(days = 6))
-                    val date = when {
-                        today in weekMonday..weekSunday -> today
-                        weekMonday.month != weekSunday.month -> {
-                            if (weekMonday < selectedDate) {
-                                @Suppress("DEPRECATION")
-                                LocalDate(weekSunday.year, weekSunday.month.number, 1)
-                            } else {
-                                weekMonday
-                            }
-                        }
-                        else -> weekMonday
-                    }
-                    onDateClick(date)
-                },
-                shiftKindAt = shiftKindAt,
-                showLegalHoliday = showLegalHoliday,
-                modifier = Modifier
-            )
-        } else {
-            CalendarPager(
-                selectedDate = selectedDate,
-                today = today,
-                onDateClick = onDateClick,
-                onMonthChanged = onMonthChanged,
-                collapseProgress = collapseProgress,
-                rowHeightPx = rowHeightPx,
-                effectiveWeeks = effectiveWeeks,
-                shiftKindAt = shiftKindAt,
-                showLegalHoliday = showLegalHoliday,
-                onRowHeightMeasured = onRowHeightMeasured,
-                pagerState = pagerState,
-                modifier = Modifier
-            )
-        }
-    }
+    )
 }
 
 @Composable
