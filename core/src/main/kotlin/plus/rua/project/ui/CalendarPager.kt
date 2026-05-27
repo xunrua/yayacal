@@ -14,6 +14,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import plus.rua.project.util.logd
 import androidx.compose.ui.draw.alpha
 import kotlinx.coroutines.flow.drop
@@ -91,7 +92,7 @@ fun CalendarPager(
         state = pagerState,
         beyondViewportPageCount = 0,
         flingBehavior = PagerDefaults.flingBehavior(state = pagerState),
-        modifier = modifier
+        modifier = modifier.testTag("calendar_pager")
     ) { page ->
         val pageOffset = abs(currentPageOffsetFraction)
         val isCurrentPage = page == currentPage

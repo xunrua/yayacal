@@ -22,6 +22,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 
 /**
@@ -39,6 +42,7 @@ fun ToolsScreen(
     modifier: Modifier = Modifier
 ) {
     Scaffold(
+        modifier = modifier.semantics { testTagsAsResourceId = true },
         topBar = {
             TopAppBar(
                 title = { Text("工具") },
@@ -66,7 +70,6 @@ fun ToolsScreen(
                 }
             )
         },
-        modifier = modifier
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -76,7 +79,8 @@ fun ToolsScreen(
         ) {
             ToolItem(
                 title = "日期检查器",
-                onClick = onNavigateToDateChecker
+                onClick = onNavigateToDateChecker,
+                modifier = Modifier.testTag("tool_date_checker")
             )
         }
     }

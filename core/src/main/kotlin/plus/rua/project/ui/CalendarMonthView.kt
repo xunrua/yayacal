@@ -61,6 +61,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -177,6 +180,7 @@ fun CalendarMonthView(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
+            .semantics { testTagsAsResourceId = true }
             .onSizeChanged { size ->
                 screenWidthPx = size.width
             }
@@ -377,7 +381,8 @@ fun CalendarMonthView(
             onClick = { isMenuExpanded = !isMenuExpanded },
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(start = 24.dp, bottom = 32.dp),
+                .padding(start = 24.dp, bottom = 32.dp)
+                .testTag("fab_menu"),
             shape = CircleShape,
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer

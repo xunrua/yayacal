@@ -91,25 +91,80 @@ class BaselineProfileGenerator {
                     device.waitForIdle()
                 }
 
-                // 8. 上下滑动触发月视图↔周视图切换（覆盖 BottomCard 拖拽 + collapse 动画）
-                val calendarArea = device.findObject(By.res("plus.rua.project:id/calendar_pager"))
-                    ?: device.findObject(By.textContains("2026"))
-                if (calendarArea != null) {
-                    calendarArea.swipe(Direction.UP, 0.5f)
+                // 8. 拖拽 BottomCard 触发月视图↔周视图折叠/展开
+                val bottomCard = device.findObject(By.res("plus.rua.project:id/bottom_card"))
+                if (bottomCard != null) {
+                    val bounds = bottomCard.visibleBounds
+                    val centerX = bounds.centerX()
+                    val centerY = bounds.centerY()
+                    val dragDistance = (bounds.height() * 0.4).toInt()
+                    // 向上拖拽 → 折叠到周视图
+                    device.drag(centerX, centerY, centerX, centerY - dragDistance, 20)
                     device.waitForIdle()
-                    calendarArea.swipe(Direction.DOWN, 0.5f)
-                    device.waitForIdle()
-                }
-
-                // 9. 左右滑动切换月份（覆盖 CalendarPager 翻页）
-                if (calendarArea != null) {
-                    calendarArea.swipe(Direction.LEFT, 0.5f)
-                    device.waitForIdle()
-                    calendarArea.swipe(Direction.RIGHT, 0.5f)
+                    // 向下拖拽 → 展开到月视图
+                    device.drag(centerX, centerY - dragDistance, centerX, centerY, 20)
                     device.waitForIdle()
                 }
 
-                // 10. 进入关于页面（覆盖 AboutScreen + AnimatedGif）
+                // 9. 展开 FAB 并进入工具页面
+                val fabMenu = device.findObject(By.res("plus.rua.project:id/fab_menu"))
+                if (fabMenu != null) {
+                    fabMenu.click()
+                    device.waitForIdle()
+                }
+                val toolsButton = device.findObject(By.text("工具"))
+                if (toolsButton != null) {
+                    toolsButton.click()
+                    device.waitForIdle()
+                }
+
+                // 10. 进入日期检查器（覆盖 DateCheckerScreen）
+                val dateCheckerEntry = device.findObject(By.res("plus.rua.project:id/tool_date_checker"))
+                if (dateCheckerEntry != null) {
+                    dateCheckerEntry.click()
+                    device.waitForIdle()
+                }
+
+                // 11. 点击日历图标打开 DatePickerDialog（覆盖 DatePicker）
+                val datePickerBtn = device.findObject(By.res("plus.rua.project:id/date_picker_button"))
+                if (datePickerBtn != null) {
+                    datePickerBtn.click()
+                    device.waitForIdle()
+                }
+
+                // 12. 等待 DatePickerDialog 并点击确定
+                device.wait(Until.findObject(By.text("确定")), 2000)
+                val confirmBtn = device.findObject(By.text("确定"))
+                if (confirmBtn != null) {
+                    confirmBtn.click()
+                    device.waitForIdle()
+                }
+
+                // 13. 点击 FAB 添加新行（覆盖 FAB + LazyColumn items 重组）
+                val dateCheckerFab = device.findObject(By.res("plus.rua.project:id/date_checker_fab"))
+                if (dateCheckerFab != null) {
+                    dateCheckerFab.click()
+                    device.waitForIdle()
+                }
+
+                // 14. 返回工具页
+                device.pressBack()
+                device.waitForIdle()
+
+                // 15. 返回主界面
+                device.pressBack()
+                device.waitForIdle()
+
+                // 16. 左右滑动切换月份（覆盖 CalendarPager 翻页）
+                val calendarPager = device.findObject(By.res("plus.rua.project:id/calendar_pager"))
+                if (calendarPager != null) {
+                    calendarPager.swipe(Direction.LEFT, 0.5f)
+                    device.waitForIdle()
+                    calendarPager.swipe(Direction.RIGHT, 0.5f)
+                    device.waitForIdle()
+                }
+
+                // 17. 进入关于页面（覆盖 AboutScreen + AnimatedGif）
                 val aboutButton = device.findObject(By.text("关于"))
                 if (aboutButton != null) {
                     aboutButton.click()

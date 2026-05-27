@@ -45,6 +45,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.input.ImeAction
@@ -97,6 +100,7 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var datePickerTarget by remember { mutableStateOf<DatePickerTarget?>(null) }
 
     Scaffold(
+        modifier = modifier.semantics { testTagsAsResourceId = true },
         topBar = {
             TopAppBar(
                 title = { Text("日期检查器") },
@@ -113,6 +117,7 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     rows = rows + ExpiryRow(nextId, null)
                     nextId++
                 },
+                modifier = Modifier.testTag("date_checker_fab"),
                 shape = CircleShape,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -120,7 +125,6 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 PlusIcon(color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
         },
-        modifier = modifier
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -261,7 +265,10 @@ private fun ProductionDateField(
             imeAction = ImeAction.Done
         ),
         trailingIcon = {
-            IconButton(onClick = onShowDatePicker) {
+            IconButton(
+                onClick = onShowDatePicker,
+                modifier = Modifier.testTag("date_picker_button")
+            ) {
                 CalendarIcon(color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },

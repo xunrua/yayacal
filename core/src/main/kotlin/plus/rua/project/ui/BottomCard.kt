@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
@@ -84,6 +85,7 @@ fun BottomCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            .testTag("bottom_card")
             .pointerInput(isCollapsed) {
                 if (isCollapsed) {
                     // 折叠状态：下拉恢复到月视图

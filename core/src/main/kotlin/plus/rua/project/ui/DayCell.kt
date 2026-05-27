@@ -243,7 +243,11 @@ private fun DayCellImpl(
                 .fillMaxSize()
                 .semantics {
                     @Suppress("DEPRECATION")
-                    contentDescription = "${date.year}年${date.monthNumber}月${date.day}日"
+                    contentDescription = if (isToday) {
+                        "今天 ${date.year}年${date.monthNumber}月${date.day}日"
+                    } else {
+                        "${date.year}年${date.monthNumber}月${date.day}日"
+                    }
                 }
                 .clip(CircleShape)
                 .drawBehind {
