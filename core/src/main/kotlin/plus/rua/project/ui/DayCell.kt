@@ -3,8 +3,11 @@ package plus.rua.project.ui
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -57,6 +60,7 @@ enum class DayCellState {
  *   false(默认):排班放右上角,不显示法定调休背景。
  *   true:排班仍在右上角,法定假日以淡色背景显示("休"淡红,"班"淡蓝)。
  * @param holidayEdgeInfo 假日在连续序列中的边缘状态,决定背景圆角。null 表示无假日。
+ * @param cellIndex 单元格在月网格中的线性索引(weekIndex*7+dayIndex),用于法定假日波浪动画延迟。
  * @param onClick 点击回调
  * @param modifier 外部布局修饰符
  */
@@ -69,6 +73,7 @@ fun DayCell(
     shiftKind: ShiftKind?,
     showLegalHoliday: Boolean,
     holidayEdgeInfo: HolidayEdgeInfo? = null,
+    cellIndex: Int = 0,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -84,6 +89,7 @@ fun DayCell(
             shiftKind = shiftKind,
             showLegalHoliday = showLegalHoliday,
             holidayEdgeInfo = holidayEdgeInfo,
+            cellIndex = cellIndex,
             onClick = onClick,
             modifier = modifier,
             interactionSource = interactionSource,
@@ -105,6 +111,7 @@ fun DayCell(
             shiftKind = shiftKind,
             showLegalHoliday = showLegalHoliday,
             holidayEdgeInfo = holidayEdgeInfo,
+            cellIndex = cellIndex,
             onClick = onClick,
             modifier = modifier,
             interactionSource = interactionSource,
@@ -122,6 +129,7 @@ private fun DayCellImpl(
     shiftKind: ShiftKind?,
     showLegalHoliday: Boolean,
     holidayEdgeInfo: HolidayEdgeInfo?,
+    cellIndex: Int,
     onClick: () -> Unit,
     modifier: Modifier,
     interactionSource: MutableInteractionSource,
@@ -220,11 +228,21 @@ private fun DayCellImpl(
         else -> Color.Transparent
     }
 
+    val holidayScale by animateFloatAsState(
+        targetValue = if (showLegalHoliday && holidayBadge != null) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = 200,
+            delayMillis = cellIndex * 15,
+            easing = FastOutSlowInEasing
+        ),
+        label = "holidayScale"
+    )
+
     Box(
         modifier = modifier.aspectRatio(1f)
     ) {
         // 法定假日背景（最底层，与选中/今天状态叠加）
-        if (showLegalHoliday && holidayBadge != null) {
+        if (holidayScale > 0f) {
             val holidayShape = when {
                 holidayEdgeInfo?.isStart == true && holidayEdgeInfo.isEnd -> RoundedCornerShape(8.dp)
                 holidayEdgeInfo?.isStart == true -> RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)
@@ -235,6 +253,11 @@ private fun DayCellImpl(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 0.5.dp)
+                    .graphicsLayer {
+                        scaleX = holidayScale
+                        scaleY = holidayScale
+                        transformOrigin = TransformOrigin.Center
+                    }
                     .background(holidayBgColor, holidayShape)
             )
         }

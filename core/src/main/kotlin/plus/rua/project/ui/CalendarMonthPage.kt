@@ -253,7 +253,7 @@ private fun WeekRow(
                 )
                 .padding(vertical = ROW_PADDING_DP.dp)
         ) {
-            week.forEach { dayData ->
+            week.forEachIndexed { dayIndex, dayData ->
                 key(dayData.date) {
                     DayCell(
                         date = dayData.date,
@@ -263,6 +263,7 @@ private fun WeekRow(
                         shiftKind = shiftKindAt(dayData.date),
                         showLegalHoliday = showLegalHoliday,
                         holidayEdgeInfo = holidayEdges[dayData.date],
+                        cellIndex = weekIndex * 7 + dayIndex,
                         onClick = { onDateClick(dayData.date) },
                         modifier = Modifier.weight(1f),
                         interactionSource = interactionSource,

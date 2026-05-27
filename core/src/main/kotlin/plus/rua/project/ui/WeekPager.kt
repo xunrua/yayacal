@@ -112,6 +112,7 @@ fun WeekPager(
                     isToday = date == today,
                     shiftKind = shiftKindAt(date),
                     showLegalHoliday = showLegalHoliday,
+                    cellIndex = dayOffset,
                     onClick = { onDateClick(date) },
                     modifier = Modifier.weight(1f),
                     interactionSource = interactionSource,
