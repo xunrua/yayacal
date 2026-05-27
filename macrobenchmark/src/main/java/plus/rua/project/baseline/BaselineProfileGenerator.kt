@@ -57,7 +57,7 @@ class BaselineProfileGenerator {
                 device.waitForIdle()
 
                 // 2. 展开 FAB 菜单，等待菜单项出现
-                val fab = device.findObject(By.res("plus.rua.project:id/fab_menu"))
+                val fab = device.findObject(By.res("fab_menu"))
                 assertNotNull("FAB 按钮必须存在", fab)
                 fab!!.click()
                 val yearViewItem = device.wait(Until.findObject(By.text("年视图")), 3000)
@@ -66,7 +66,7 @@ class BaselineProfileGenerator {
                 // 3. 切换到年视图（覆盖 YearGridView、YearHeader、MiniMonth 路径）
                 assertNotNull("年视图菜单项必须出现", yearViewItem)
                 yearViewItem!!.click()
-                val yearGrid = device.wait(Until.findObject(By.res("plus.rua.project:id/year_grid")), 3000)
+                val yearGrid = device.wait(Until.findObject(By.res("year_grid")), 3000)
                 Log.d(TAG, "年视图加载: yearGrid=${yearGrid != null}")
                 assertNotNull("YearGridView 必须加载", yearGrid)
                 device.waitForIdle()
@@ -78,7 +78,7 @@ class BaselineProfileGenerator {
                 device.waitForIdle()
 
                 // 5. 展开 FAB 并切换回月视图
-                val fabForMonth = device.findObject(By.res("plus.rua.project:id/fab_menu"))
+                val fabForMonth = device.findObject(By.res("fab_menu"))
                 assertNotNull("FAB 按钮必须存在（返回月视图）", fabForMonth)
                 fabForMonth!!.click()
                 val monthViewItem = device.wait(Until.findObject(By.text("月视图")), 3000)
@@ -87,15 +87,23 @@ class BaselineProfileGenerator {
                 monthViewItem!!.click()
                 device.waitForIdle()
 
-                // 6. 点击某一天（覆盖 DayCell 点击路径 + 底部卡片展开）
-                val todayCell = device.findObject(By.descContains("今天"))
-                    ?: device.findObject(By.text("21"))
-                assertNotNull("DayCell 必须可点击", todayCell)
-                todayCell!!.click()
+                // 6. 等待月视图完全加载，点击某一天（覆盖 DayCell 点击路径 + 底部卡片展开）
+                device.wait(Until.findObject(By.res("calendar_pager")), 3000)
+                val todayCell = device.wait(Until.findObject(By.descContains("今天")), 3000)
+                if (todayCell != null) {
+                    Log.d(TAG, "找到今天 DayCell")
+                    todayCell.click()
+                } else {
+                    // 回退：点击任意一天（15号总是存在）
+                    Log.d(TAG, "未找到今天，回退点击 15 号")
+                    val day15 = device.findObject(By.text("15"))
+                    assertNotNull("DayCell 15 必须可点击", day15)
+                    day15!!.click()
+                }
                 device.waitForIdle()
 
                 // 7. 拖拽 BottomCard 触发月视图↔周视图折叠/展开
-                val bottomCard = device.findObject(By.res("plus.rua.project:id/bottom_card"))
+                val bottomCard = device.findObject(By.res("bottom_card"))
                 assertNotNull("BottomCard 必须存在", bottomCard)
                 val bounds = bottomCard!!.visibleBounds
                 val centerX = bounds.centerX()
@@ -109,7 +117,7 @@ class BaselineProfileGenerator {
                 device.waitForIdle()
 
                 // 8. 展开 FAB 并进入工具页面
-                val fabForTools = device.findObject(By.res("plus.rua.project:id/fab_menu"))
+                val fabForTools = device.findObject(By.res("fab_menu"))
                 assertNotNull("FAB 按钮必须存在（工具页）", fabForTools)
                 fabForTools!!.click()
                 val toolsButton = device.wait(Until.findObject(By.text("工具")), 3000)
@@ -120,7 +128,7 @@ class BaselineProfileGenerator {
 
                 // 9. 进入日期检查器（覆盖 DateCheckerScreen）
                 val dateCheckerEntry = device.wait(
-                    Until.findObject(By.res("plus.rua.project:id/tool_date_checker")), 3000
+                    Until.findObject(By.res("tool_date_checker")), 3000
                 )
                 assertNotNull("日期检查器入口必须存在", dateCheckerEntry)
                 dateCheckerEntry!!.click()
@@ -128,7 +136,7 @@ class BaselineProfileGenerator {
 
                 // 10. 点击日历图标打开 DatePickerDialog（覆盖 DatePicker）
                 val datePickerBtn = device.wait(
-                    Until.findObject(By.res("plus.rua.project:id/date_picker_button")), 3000
+                    Until.findObject(By.res("date_picker_button")), 3000
                 )
                 if (datePickerBtn != null) {
                     datePickerBtn.click()
@@ -144,7 +152,7 @@ class BaselineProfileGenerator {
                 }
 
                 // 12. 点击 FAB 添加新行（覆盖 FAB + LazyColumn items 重组）
-                val dateCheckerFab = device.findObject(By.res("plus.rua.project:id/date_checker_fab"))
+                val dateCheckerFab = device.findObject(By.res("date_checker_fab"))
                 if (dateCheckerFab != null) {
                     dateCheckerFab.click()
                     device.waitForIdle()
@@ -159,7 +167,7 @@ class BaselineProfileGenerator {
                 device.waitForIdle()
 
                 // 15. 左右滑动切换月份（覆盖 CalendarPager 翻页）
-                val calendarPager = device.findObject(By.res("plus.rua.project:id/calendar_pager"))
+                val calendarPager = device.findObject(By.res("calendar_pager"))
                 assertNotNull("CalendarPager 必须存在", calendarPager)
                 calendarPager!!.swipe(Direction.LEFT, 0.5f)
                 device.waitForIdle()
@@ -167,7 +175,7 @@ class BaselineProfileGenerator {
                 device.waitForIdle()
 
                 // 16. 进入关于页面（覆盖 AboutScreen + AnimatedGif）
-                val fabForAbout = device.findObject(By.res("plus.rua.project:id/fab_menu"))
+                val fabForAbout = device.findObject(By.res("fab_menu"))
                 assertNotNull("FAB 按钮必须存在（关于页）", fabForAbout)
                 fabForAbout!!.click()
                 val aboutButton = device.wait(Until.findObject(By.text("关于")), 3000)
@@ -176,8 +184,8 @@ class BaselineProfileGenerator {
                 device.waitForIdle()
 
                 // 17. 进入开源许可页面（覆盖 LicensesScreen）
-                val licensesButton = device.wait(Until.findObject(By.text("开源许可")), 3000)
-                assertNotNull("开源许可按钮必须存在", licensesButton)
+                val licensesButton = device.wait(Until.findObject(By.text("开放源代码许可")), 3000)
+                assertNotNull("开放源代码许可按钮必须存在", licensesButton)
                 licensesButton!!.click()
                 device.waitForIdle()
 
