@@ -18618,3 +18618,16 @@ SPLplus/rua/project/ui/WeekdayHeaderKt;->WeekdayHeader(Landroidx/compose/ui/Modi
 Lplus/rua/project/ui/WeekdayHeaderKt$$ExternalSyntheticLambda0;
 SPLplus/rua/project/ui/WeekdayHeaderKt$$ExternalSyntheticLambda0;-><init>()V
 SPLplus/rua/project/ui/WeekdayHeaderKt$$ExternalSyntheticLambda0;->invoke(Ljava/lang/Object;)Ljava/lang/Object;
+Lplus/rua/project/ui/YearGridViewKt;
+HPLplus/rua/project/ui/YearGridViewKt;->YearGridView(IILkotlinx/datetime/LocalDate;Lkotlin/jvm/functions/Function1;Landroidx/compose/animation/SharedTransitionScope;Landroidx/compose/animation/AnimatedVisibilityScope;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+HPLplus/rua/project/ui/YearGridViewKt;->generateMiniMonthDays(II)Ljava/util/List;
+Lplus/rua/project/ui/YearGridViewKt;->MiniMonth(IIZLkotlinx/datetime/LocalDate;Ljava/util/List;Lplus/rua/project/ui/MiniMonthColors;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+Lplus/rua/project/ui/YearGridViewKt;->YearHeader(IILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+Lplus/rua/project/ui/MiniMonthColors;
+HPLplus/rua/project/CalendarViewModel;->toggleYearView()V
+HPLplus/rua/project/CalendarViewModel;->selectMonthFromYearView(I)V
+HPLplus/rua/project/CalendarViewModel;->onDrag(F)V
+HPLplus/rua/project/CalendarViewModel;->onDragEnd()V
+HPLplus/rua/project/CalendarViewModel;->onExpandDrag(F)V
+HPLplus/rua/project/CalendarViewModel;->onExpandDragEnd()V
+HPLplus/rua/project/CalendarViewModel;->getMonthDays(II)Ljava/util/List;

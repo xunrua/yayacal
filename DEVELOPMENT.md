@@ -27,10 +27,17 @@
 trace 中包含自定义标记：
 
 - `MonthView:Compose` — 月视图重组
+- `CalendarPagerArea` — 日历分页器区域
+- `CalendarPager:Page:*` — 月视图单页重组
+- `CalendarMonthPage:*` — 月页面数据计算（含折叠动画准备）
+- `WeekPager:Page` — 周视图单页重组
 - `YearView:Compose` — 年视图重组
 - `YearGridView:*` — 年视图网格组合（首帧耗时关键指标）
 - `generateMiniMonthDays:*` — 月份网格计算
-- `VM:collapseProgress` — 折叠动画
+- `MonthView→YearView` / `YearView→MonthView` — 视图切换
+- `YearView:SelectMonth` — 年视图选月
+- `getMonthDays:*` — ViewModel 月份网格计算
+- `VM:collapseProgress:*` — 折叠动画拖拽（onDrag/onDragEnd/onExpandDrag/onExpandDragEnd）
 
 ## Baseline Profile
 

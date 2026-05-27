@@ -280,7 +280,9 @@ class CalendarViewModel(
      * @param delta 拖拽增量，已归一化到 [0,1] 区间
      */
     fun onDrag(delta: Float) {
+        composeTraceBeginSection("VM:collapseProgress:onDrag")
         _collapseProgress.value = (_collapseProgress.value + delta).coerceIn(0f, 1f)
+        composeTraceEndSection()
     }
 
     /**
@@ -289,6 +291,7 @@ class CalendarViewModel(
      * 拖拽超过阈值时自动折叠到周视图，否则回弹到月视图。
      */
     fun onDragEnd() {
+        composeTraceBeginSection("VM:collapseProgress:onDragEnd")
         val progress = _collapseProgress.value
         if (progress > COLLAPSE_THRESHOLD) {
             _isCollapsed.value = true
@@ -297,6 +300,7 @@ class CalendarViewModel(
             _isCollapsed.value = false
             _collapseProgress.value = 0f
         }
+        composeTraceEndSection()
     }
 
     /**
@@ -305,9 +309,11 @@ class CalendarViewModel(
      * @param delta 拖拽增量，已归一化到 [0,1] 区间
      */
     fun onExpandDrag(delta: Float) {
+        composeTraceBeginSection("VM:collapseProgress:onExpandDrag")
         val old = _collapseProgress.value
         _collapseProgress.value = (_collapseProgress.value + delta).coerceIn(0f, 1f)
         logd(TAG_VM, "onExpandDrag: delta=$delta old=$old new=${_collapseProgress.value}")
+        composeTraceEndSection()
     }
 
     /**
@@ -316,6 +322,7 @@ class CalendarViewModel(
      * 下拉超过阈值时自动展开到月视图，否则回弹到周视图。
      */
     fun onExpandDragEnd() {
+        composeTraceBeginSection("VM:collapseProgress:onExpandDragEnd")
         val progress = _collapseProgress.value
         val result = if (progress < (1 - COLLAPSE_THRESHOLD)) {
             _isCollapsed.value = false
@@ -327,6 +334,7 @@ class CalendarViewModel(
             "COLLAPSED (bounce back)"
         }
         logd(TAG_VM, "onExpandDragEnd: progress=$progress threshold=${1 - COLLAPSE_THRESHOLD} result=$result")
+        composeTraceEndSection()
     }
 
     /**

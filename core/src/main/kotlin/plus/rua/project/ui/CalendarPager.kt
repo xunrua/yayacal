@@ -15,6 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import plus.rua.project.composeTraceBeginSection
+import plus.rua.project.composeTraceEndSection
 import plus.rua.project.util.logd
 import androidx.compose.ui.draw.alpha
 import kotlinx.coroutines.flow.drop
@@ -105,6 +107,7 @@ fun CalendarPager(
         if (isCurrentPage) {
             logd("AnimLog", "[CalendarPager] Compose page=$page ($year-$month) alpha=$alpha pageOffset=$pageOffset")
         }
+        composeTraceBeginSection("CalendarPager:Page:$year-$month")
         CalendarMonthPage(
             year = year,
             month = month,
@@ -137,5 +140,6 @@ fun CalendarPager(
             onRowHeightMeasured = onRowHeightMeasured,
             modifier = Modifier.alpha(alpha)
         )
+        composeTraceEndSection()
     }
 }

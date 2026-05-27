@@ -21,6 +21,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import plus.rua.project.composeTraceBeginSection
+import plus.rua.project.composeTraceEndSection
 import plus.rua.project.util.logd
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
@@ -68,6 +70,7 @@ fun CalendarMonthPage(
     onRowHeightMeasured: ((Int) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    composeTraceBeginSection("CalendarMonthPage:$year-$month")
     val days = remember(year, month) {
         generateMonthDays(year, month)
     }
@@ -129,6 +132,7 @@ fun CalendarMonthPage(
             else Modifier
         )
     ) {
+        composeTraceEndSection()
         weeks.forEachIndexed { weekIndex, week ->
             key(weekIndex) {
                 WeekRow(

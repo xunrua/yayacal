@@ -21,12 +21,10 @@ import plus.rua.project.getWebpUri
  */
 private val WEBP_FILES = (1..152).map { "${it.toString().padStart(3, '0')}.webp" }
 
-private const val REPEAT_COUNT = 2
-
 /**
  * 显示动画 WebP 图片，切换日期时随机选择一个。
  *
- * 动画播放 3 次（1 + [REPEAT_COUNT]）后停止，避免持续解码导致的帧丢失。
+ * 动画无限循环播放。
  *
  * @param modifier 应用于图片的 Modifier
  * @param contentDescription 无障碍描述
@@ -55,7 +53,7 @@ fun AnimatedGif(
     }
 
     val state = rememberAsyncImageState(
-        options = remember { ImageOptions { repeatCount(REPEAT_COUNT) } }
+        options = remember { ImageOptions { repeatCount(-1) } }
     )
 
     AsyncImage(
