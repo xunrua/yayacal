@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
-import plus.rua.project.util.logd
 
 /**
  * 开放源代码许可页面，展示项目使用的第三方库及其许可证。
@@ -73,9 +72,7 @@ fun LicensesScreen(
         ) {
             items(licenses) { item ->
                 Card(
-                    onClick = {
-                        logd("LicensesScreen") { "clicked: ${item.library}" }
-                    },
+                    onClick = {},
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                     ),
