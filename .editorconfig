@@ -1,0 +1,5 @@
+root = true
+
+[*.{kt,kts}]
+# 忽略标注 @Composable 的函数命名检查，Compose 规范要求 PascalCase
+ktlint_function_naming_ignore_when_annotated_with = Composable
