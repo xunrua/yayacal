@@ -73,7 +73,7 @@ Baseline Profile 自动生成器。
 
 ## 模拟器
 
-```
+```sh
 emulator -avd Pixel_10 \
   -no-snapshot \
   -no-boot-anim \
@@ -82,4 +82,10 @@ emulator -avd Pixel_10 \
   -cores 4 \
   -memory 4096 \
   -partition-size 2048
+```
+
+启动带 adb logcat 的模拟器
+
+```sh
+./gradlew :app:installDebug && rm -rf logs/1.logcat && adb logcat | tee logs/1.logcat
 ```
