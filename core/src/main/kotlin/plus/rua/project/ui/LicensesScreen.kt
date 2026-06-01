@@ -1,13 +1,14 @@
 package plus.rua.project.ui
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
+import plus.rua.project.util.logd
 
 /**
  * 开放源代码许可页面，展示项目使用的第三方库及其许可证。
@@ -70,9 +72,17 @@ fun LicensesScreen(
                 .padding(innerPadding)
         ) {
             items(licenses) { item ->
-                Column {
+                Card(
+                    onClick = {
+                        logd("LicensesScreen") { "clicked: ${item.library}" }
+                    },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                ) {
                     ListItem(
-                        modifier = Modifier.clickable { },
                         headlineContent = {
                             Text(
                                 text = item.library,
@@ -86,10 +96,6 @@ fun LicensesScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant
                     )
                 }
             }
