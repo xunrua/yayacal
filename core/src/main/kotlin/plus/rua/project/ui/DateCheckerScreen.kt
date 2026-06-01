@@ -2,6 +2,12 @@
 
 package plus.rua.project.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,12 +22,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +47,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -129,7 +135,7 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var showDatePicker by remember { mutableStateOf(false) }
     var datePickerTarget by remember { mutableStateOf<DatePickerTarget?>(null) }
 
-    val listState = rememberLazyListState()
+    val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
 
     Scaffold(
@@ -161,8 +167,8 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     rows = rows + ExpiryRow(newId, null)
                     nextId++
                     scope.launch {
-                        delay(50)
-                        listState.animateScrollToItem(rows.size - 1)
+                        delay(100)
+                        scrollState.animateScrollTo(Int.MAX_VALUE)
                     }
                 },
                 modifier = Modifier.testTag("date_checker_fab"),
@@ -214,14 +220,19 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            LazyColumn(
-                state = listState,
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+                    .weight(1f)
+                    .verticalScroll(scrollState)
+                    .animateContentSize(
+                        animationSpec = androidx.compose.animation.core.spring(
+                            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow
+                        )
+                    )
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
-                items(rows, key = { it.id }) { row ->
+                rows.forEachIndexed { index, row ->
                     val expiryDate = row.days?.let { productionDate.plus(DatePeriod(days = it)) }
                     val daysRemaining = expiryDate?.let { today.daysUntil(it) }
                     val status = when {
@@ -244,50 +255,68 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         }
                     )
 
-                    SwipeToDismissBox(
-                        state = dismissState,
-                        modifier = Modifier.animateItem(),
-                        backgroundContent = {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(MaterialTheme.colorScheme.errorContainer)
-                                    .padding(horizontal = 20.dp),
-                                contentAlignment = Alignment.CenterEnd
+                    key(row.id) {
+                        var visible by remember { mutableStateOf(false) }
+
+                        androidx.compose.runtime.LaunchedEffect(Unit) {
+                            visible = true
+                        }
+
+                        AnimatedVisibility(
+                            visible = visible,
+                            enter = expandVertically(
+                                expandFrom = Alignment.Bottom,
+                                animationSpec = androidx.compose.animation.core.spring(
+                                    stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow
+                                )
+                            ) + fadeIn(animationSpec = androidx.compose.animation.core.tween(300)),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            SwipeToDismissBox(
+                                state = dismissState,
+                                backgroundContent = {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(MaterialTheme.colorScheme.errorContainer)
+                                            .padding(horizontal = 20.dp),
+                                        contentAlignment = Alignment.CenterEnd
+                                    ) {
+                                        Text(
+                                            text = "删除",
+                                            color = MaterialTheme.colorScheme.onErrorContainer,
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    }
+                                }
                             ) {
-                                Text(
-                                    text = "删除",
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                    style = MaterialTheme.typography.labelLarge
+                                ExpiryCard(
+                                    days = row.days,
+                                    expiryDate = expiryDate,
+                                    daysRemaining = daysRemaining,
+                                    status = status,
+                                    onDaysChange = { newDays ->
+                                        rows = rows.map {
+                                            if (it.id == row.id) it.copy(days = newDays) else it
+                                        }
+                                    },
+                                    onExpiryDateChange = { newDate ->
+                                        val newDays = productionDate.daysUntil(newDate)
+                                        rows = rows.map {
+                                            if (it.id == row.id) it.copy(days = newDays) else it
+                                        }
+                                    },
+                                    onShowDatePicker = {
+                                        datePickerTarget = DatePickerTarget.Row(row.id)
+                                        showDatePicker = true
+                                    }
                                 )
                             }
                         }
-                    ) {
-                        ExpiryCard(
-                            days = row.days,
-                            expiryDate = expiryDate,
-                            daysRemaining = daysRemaining,
-                            status = status,
-                            onDaysChange = { newDays ->
-                                rows = rows.map {
-                                    if (it.id == row.id) it.copy(days = newDays) else it
-                                }
-                            },
-                            onExpiryDateChange = { newDate ->
-                                val newDays = productionDate.daysUntil(newDate)
-                                rows = rows.map {
-                                    if (it.id == row.id) it.copy(days = newDays) else it
-                                }
-                            },
-                            onShowDatePicker = {
-                                datePickerTarget = DatePickerTarget.Row(row.id)
-                                showDatePicker = true
-                            }
-                        )
                     }
 
-                    if (row.id != rows.lastOrNull()?.id) {
+                    if (index < rows.lastIndex) {
                         Spacer(modifier = Modifier.height(10.dp))
                     }
                 }
