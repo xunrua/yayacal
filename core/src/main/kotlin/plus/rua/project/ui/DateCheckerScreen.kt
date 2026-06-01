@@ -43,18 +43,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
@@ -63,6 +60,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlin.time.Clock
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlin.time.Instant
@@ -74,7 +72,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 
-private data class ExpiryRow(val id: Int, val days: Int? = null, val isNew: Boolean = false)
+private data class ExpiryRow(val id: Int, val days: Int? = null)
 
 private sealed class DatePickerTarget {
     data object Production : DatePickerTarget()
@@ -130,7 +128,6 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     var showDatePicker by remember { mutableStateOf(false) }
     var datePickerTarget by remember { mutableStateOf<DatePickerTarget?>(null) }
-    var highlightedRowId by remember { mutableIntStateOf(-1) }
 
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -161,13 +158,11 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             FloatingActionButton(
                 onClick = {
                     val newId = nextId
-                    rows = rows + ExpiryRow(newId, null, isNew = true)
+                    rows = rows + ExpiryRow(newId, null)
                     nextId++
-                    highlightedRowId = newId
                     scope.launch {
-                        listState.scrollToItem(rows.size)
-                        kotlinx.coroutines.delay(800)
-                        highlightedRowId = -1
+                        delay(50)
+                        listState.animateScrollToItem(rows.size - 1)
                     }
                 },
                 modifier = Modifier.testTag("date_checker_fab"),
@@ -221,8 +216,9 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
             LazyColumn(
                 state = listState,
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
             ) {
                 items(rows, key = { it.id }) { row ->
@@ -250,12 +246,7 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
                     SwipeToDismissBox(
                         state = dismissState,
-                        modifier = Modifier.animateItem(
-                            placementSpec = androidx.compose.animation.core.tween(
-                                durationMillis = 400,
-                                easing = androidx.compose.animation.core.FastOutSlowInEasing
-                            )
-                        ),
+                        modifier = Modifier.animateItem(),
                         backgroundContent = {
                             Box(
                                 modifier = Modifier
@@ -278,8 +269,6 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                             expiryDate = expiryDate,
                             daysRemaining = daysRemaining,
                             status = status,
-                            isHighlighted = row.id == highlightedRowId,
-                            isNew = row.isNew,
                             onDaysChange = { newDays ->
                                 rows = rows.map {
                                     if (it.id == row.id) it.copy(days = newDays) else it
@@ -294,13 +283,12 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                             onShowDatePicker = {
                                 datePickerTarget = DatePickerTarget.Row(row.id)
                                 showDatePicker = true
-                            },
-                            onNewRowAnimated = {
-                                rows = rows.map {
-                                    if (it.id == row.id) it.copy(isNew = false) else it
-                                }
                             }
                         )
+                    }
+
+                    if (row.id != rows.lastOrNull()?.id) {
+                        Spacer(modifier = Modifier.height(10.dp))
                     }
                 }
             }
@@ -435,57 +423,19 @@ private fun ExpiryCard(
     expiryDate: LocalDate?,
     daysRemaining: Int?,
     status: ExpiryStatus,
-    isHighlighted: Boolean,
-    isNew: Boolean,
     onDaysChange: (Int?) -> Unit,
     onExpiryDateChange: (LocalDate) -> Unit,
     onShowDatePicker: () -> Unit,
-    onNewRowAnimated: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var daysText by remember(days) { mutableStateOf(days?.toString() ?: "") }
     var dateText by remember(expiryDate) { mutableStateOf(expiryDate?.toString() ?: "") }
 
-    val density = androidx.compose.ui.platform.LocalDensity.current
-    val enterOffsetPx = remember(density) { with(density) { 20.dp.toPx() } }
-
-    val animatedAlpha by animateFloatAsState(
-        targetValue = if (isNew) 0f else 1f,
-        animationSpec = androidx.compose.animation.core.tween<Float>(350, delayMillis = 50),
-        label = "enterAlpha"
-    )
-    val animatedOffset by animateFloatAsState(
-        targetValue = if (isNew) enterOffsetPx else 0f,
-        animationSpec = androidx.compose.animation.core.tween<Float>(350, delayMillis = 50),
-        label = "enterOffset"
-    )
-
-    LaunchedEffect(Unit) {
-        if (isNew) {
-            kotlinx.coroutines.delay(50)
-            onNewRowAnimated()
-        }
-    }
-
-    val backgroundColor by androidx.compose.animation.animateColorAsState(
-        targetValue = if (isHighlighted) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
-        },
-        animationSpec = androidx.compose.animation.core.tween(400),
-        label = "highlight"
-    )
-
     Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(backgroundColor)
-            .graphicsLayer(
-                alpha = animatedAlpha,
-                translationY = animatedOffset
-            )
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
     ) {
         Column(
             modifier = Modifier
