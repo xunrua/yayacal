@@ -93,8 +93,7 @@ fun CalendarMonthPage(
         val map = mutableMapOf<LocalDate, HolidayEdgeInfo>()
         for (dayData in days) {
             val date = dayData.date
-            val badge = lunarDataMap[date]?.holidayBadge
-            if (badge == null) continue
+            val badge = lunarDataMap[date]?.holidayBadge ?: continue
             val prevBadge = lunarDataMap[date.minus(DatePeriod(days = 1))]?.holidayBadge
             val nextBadge = lunarDataMap[date.plus(DatePeriod(days = 1))]?.holidayBadge
             map[date] = HolidayEdgeInfo(
