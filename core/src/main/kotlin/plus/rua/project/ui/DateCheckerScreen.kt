@@ -43,15 +43,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
@@ -71,7 +74,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 
-private data class ExpiryRow(val id: Int, val days: Int? = null)
+private data class ExpiryRow(val id: Int, val days: Int? = null, val isNew: Boolean = false)
 
 private sealed class DatePickerTarget {
     data object Production : DatePickerTarget()
@@ -158,7 +161,7 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             FloatingActionButton(
                 onClick = {
                     val newId = nextId
-                    rows = rows + ExpiryRow(newId, null)
+                    rows = rows + ExpiryRow(newId, null, isNew = true)
                     nextId++
                     highlightedRowId = newId
                     scope.launch {
@@ -247,7 +250,12 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
                     SwipeToDismissBox(
                         state = dismissState,
-                        modifier = Modifier.animateItem(),
+                        modifier = Modifier.animateItem(
+                            placementSpec = androidx.compose.animation.core.tween(
+                                durationMillis = 400,
+                                easing = androidx.compose.animation.core.FastOutSlowInEasing
+                            )
+                        ),
                         backgroundContent = {
                             Box(
                                 modifier = Modifier
@@ -271,6 +279,7 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                             daysRemaining = daysRemaining,
                             status = status,
                             isHighlighted = row.id == highlightedRowId,
+                            isNew = row.isNew,
                             onDaysChange = { newDays ->
                                 rows = rows.map {
                                     if (it.id == row.id) it.copy(days = newDays) else it
@@ -285,6 +294,11 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                             onShowDatePicker = {
                                 datePickerTarget = DatePickerTarget.Row(row.id)
                                 showDatePicker = true
+                            },
+                            onNewRowAnimated = {
+                                rows = rows.map {
+                                    if (it.id == row.id) it.copy(isNew = false) else it
+                                }
                             }
                         )
                     }
@@ -422,13 +436,36 @@ private fun ExpiryCard(
     daysRemaining: Int?,
     status: ExpiryStatus,
     isHighlighted: Boolean,
+    isNew: Boolean,
     onDaysChange: (Int?) -> Unit,
     onExpiryDateChange: (LocalDate) -> Unit,
     onShowDatePicker: () -> Unit,
+    onNewRowAnimated: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var daysText by remember(days) { mutableStateOf(days?.toString() ?: "") }
     var dateText by remember(expiryDate) { mutableStateOf(expiryDate?.toString() ?: "") }
+
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val enterOffsetPx = remember(density) { with(density) { 20.dp.toPx() } }
+
+    val animatedAlpha by animateFloatAsState(
+        targetValue = if (isNew) 0f else 1f,
+        animationSpec = androidx.compose.animation.core.tween<Float>(350, delayMillis = 50),
+        label = "enterAlpha"
+    )
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (isNew) enterOffsetPx else 0f,
+        animationSpec = androidx.compose.animation.core.tween<Float>(350, delayMillis = 50),
+        label = "enterOffset"
+    )
+
+    LaunchedEffect(Unit) {
+        if (isNew) {
+            kotlinx.coroutines.delay(50)
+            onNewRowAnimated()
+        }
+    }
 
     val backgroundColor by androidx.compose.animation.animateColorAsState(
         targetValue = if (isHighlighted) {
@@ -445,6 +482,10 @@ private fun ExpiryCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
+            .graphicsLayer(
+                alpha = animatedAlpha,
+                translationY = animatedOffset
+            )
     ) {
         Column(
             modifier = Modifier
