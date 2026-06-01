@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
@@ -195,7 +196,7 @@ fun CalendarMonthView(
                     val enter = scaleIn(
                         initialScale = 0.85f,
                         animationSpec = tween(350, easing = FastOutSlowInEasing)
-                    ) + fadeIn(tween(350, easing = FastOutSlowInEasing))
+                    ) + fadeIn(tween(350, easing = LinearOutSlowInEasing))
                     val exit = scaleOut(
                         targetScale = 0.85f,
                         animationSpec = tween(350, easing = FastOutSlowInEasing)
@@ -583,37 +584,22 @@ private fun BottomCardArea(
         dragRangeMinPx
     }
 
-    val slideAnim = remember { Animatable(if (isYearView) 1f else 0f) }
+    // 初始值固定为 1f（屏幕外），确保年→月切换时 BottomCard 能从屏幕外滑入
+    val slideAnim = remember { Animatable(1f) }
     LaunchedEffect(isYearView) {
-        if (isYearView) {
-            slideAnim.animateTo(1f, tween(200))
-        } else {
-            slideAnim.snapTo(1f)
-            delay(200)
-            slideAnim.animateTo(0f, tween(150))
-        }
+        slideAnim.animateTo(if (isYearView) 1f else 0f, tween(200))
     }
     val slideProgress = slideAnim.value
-    var lastLoggedSlide by remember { mutableStateOf(-1f) }
-    SideEffect {
-        if (kotlin.math.abs(lastLoggedSlide - slideProgress) > 0.001f) {
-            lastLoggedSlide = slideProgress
-            logd("AnimLog", "[BottomCard] slideProgress=$slideProgress isYearView=$isYearView")
-        }
-    }
     // 延迟一帧显示 BottomCard，避免 AnimatedGif 和 lunar 计算阻塞首帧
     var hasLoaded by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(32)
         hasLoaded = true
-        logd("AnimLog", "[BottomCard] hasLoaded=true after delay")
     }
     val shouldShow = hasLoaded
 
     val uiState by viewModel.uiState.collectAsState()
     val shiftKind = viewModel.shiftKindAt(uiState.selectedDate)
-
-    logd("AnimLog", "[BottomCard] shouldShow=$shouldShow isYearView=$isYearView slideProgress=$slideProgress dragRangePx=$dragRangePx rowHeightPx=$rowHeightPx")
 
     if (shouldShow) {
         BottomCard(
