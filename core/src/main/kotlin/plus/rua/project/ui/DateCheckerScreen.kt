@@ -237,16 +237,13 @@ fun DateCheckerScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     val isBeingDeleted = row.id in pendingDeleteIds
 
                     key(row.id) {
-                        val dismissState = rememberSwipeToDismissBoxState(
-                            confirmValueChange = { value ->
-                                if (value == SwipeToDismissBoxValue.EndToStart) {
-                                    pendingDeleteIds = pendingDeleteIds + row.id
-                                    true
-                                } else {
-                                    false
-                                }
+                        val dismissState = rememberSwipeToDismissBoxState()
+
+                        androidx.compose.runtime.LaunchedEffect(dismissState.currentValue) {
+                            if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart && !isBeingDeleted) {
+                                pendingDeleteIds = pendingDeleteIds + row.id
                             }
-                        )
+                        }
 
                         var visible by remember { mutableStateOf(false) }
 
