@@ -77,3 +77,4 @@ CalendarMonthView          ← top-level screen (MonthHeader + WeekdayHeader + p
 - Public `@Composable` functions require KDoc per `COMMENTS.md`
 - `Modifier` parameter always last in composable signatures
 - Callback parameters use `on` prefix (`onDateClick`, `onMonthChanged`)
+- **Clickable list items:** Use `Card(onClick = ...)` with `CardDefaults.cardElevation(defaultElevation = 0.dp)` instead of `Modifier.clickable()` on `Box`/`Row`. This ensures consistent Material 3 press-state feedback (ripple + background color change) across all interactive list/menu items. See `LicensesScreen`, `ToolsScreen`, and `CalendarMonthView.MenuItem` for reference.
