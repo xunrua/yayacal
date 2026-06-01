@@ -18,13 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.plus
-import plus.rua.project.DayCellInfo
-import plus.rua.project.LunarCache
 import plus.rua.project.ShiftKind
 import plus.rua.project.composeTraceBeginSection
 import plus.rua.project.composeTraceEndSection
@@ -99,11 +96,6 @@ fun WeekPager(
         ) {
             (0 until 7).forEach { dayOffset ->
                 val date = weekMonday.plus(DatePeriod(days = dayOffset))
-                val lunarData = remember(date) {
-                    runBlocking {
-                        LunarCache.default.getOrCompute(date)
-                    }
-                }
                 DayCell(
                     date = date,
                     isCurrentMonth = date.month == selectedDate.month
@@ -115,8 +107,7 @@ fun WeekPager(
                     cellIndex = dayOffset,
                     onClick = { onDateClick(date) },
                     modifier = Modifier.weight(1f),
-                    interactionSource = interactionSource,
-                    lunarData = lunarData
+                    interactionSource = interactionSource
                 )
             }
         }

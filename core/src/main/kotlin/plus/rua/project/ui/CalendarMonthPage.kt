@@ -292,16 +292,9 @@ data class HolidayEdgeInfo(
 )
 
 private fun generateMonthDays(year: Int, month: Int): List<DayData> {
-    val firstOfMonth = LocalDate(year, Month(month), 1)
-    val offset = firstOfMonth.dayOfWeek.ordinal
-    val startDate = firstOfMonth.minus(DatePeriod(days = offset))
-    val nextMonth = if (month == 12) LocalDate(year + 1, 1, 1) else LocalDate(year, Month(month + 1), 1)
-    val daysInMonth = nextMonth.minus(DatePeriod(days = 1)).day
-    val rows = ((offset + daysInMonth - 1) / 7) + 1
-    val totalDays = rows * 7
-
-    return (0 until totalDays).map { i ->
-        val date = startDate.plus(DatePeriod(days = i))
+    val info = getMonthGridInfo(year, month)
+    return (0 until info.totalDays).map { i ->
+        val date = info.startDate.plus(DatePeriod(days = i))
         DayData(
             date = date,
             isCurrentMonth = date.month.number == month && date.year == year

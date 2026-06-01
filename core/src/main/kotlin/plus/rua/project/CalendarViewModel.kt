@@ -57,37 +57,6 @@ data class CalendarUiState(
 )
 
 /**
- * 将六个 [Flow] 合并为一个 [Flow]，使用 [transform] 处理最新值。
- *
- * kotlinx-coroutines 1.11 仅内置到 5 参数的 [combine] 重载，
- * 此扩展用于扁平化 6 个 StateFlow 的合并，避免多层嵌套产生的中间流。
- */
-private inline fun <T1, T2, T3, T4, T5, T6, R> combine(
-    flow: Flow<T1>,
-    flow2: Flow<T2>,
-    flow3: Flow<T3>,
-    flow4: Flow<T4>,
-    flow5: Flow<T5>,
-    flow6: Flow<T6>,
-    crossinline transform: suspend (T1, T2, T3, T4, T5, T6) -> R
-): Flow<R> = combine(
-    combine(flow, flow2, flow3, flow4, flow5) { t1, t2, t3, t4, t5 ->
-        Quintuple(t1, t2, t3, t4, t5)
-    },
-    flow6
-) { quintuple, t6 ->
-    transform(quintuple.first, quintuple.second, quintuple.third, quintuple.fourth, quintuple.fifth, t6)
-}
-
-private data class Quintuple<T1, T2, T3, T4, T5>(
-    val first: T1,
-    val second: T2,
-    val third: T3,
-    val fourth: T4,
-    val fifth: T5
-)
-
-/**
  * 日历状态管理，持有选中日期、折叠状态和 ISO 周号计算逻辑。
  *
  * @param clock 时钟源，默认系统时钟；测试时可注入固定时钟
@@ -141,9 +110,6 @@ class CalendarViewModel(
     private val _isYearView = MutableStateFlow(false)
     val isYearView: StateFlow<Boolean> = _isYearView.asStateFlow()
 
-    private val _yearViewProgress = MutableStateFlow(0f)
-    val yearViewProgress: StateFlow<Float> = _yearViewProgress.asStateFlow()
-
     private val _yearViewYear = MutableStateFlow(today.year)
     val yearViewYear: StateFlow<Int> = _yearViewYear.asStateFlow()
 
@@ -170,13 +136,9 @@ class CalendarViewModel(
 
     /** 聚合 UI 状态，减少 Compose 层分散订阅导致的重组。 */
     val uiState: StateFlow<CalendarUiState> = combine(
-        _selectedDate,
-        _isCollapsed,
-        _isYearView,
-        _yearViewYear,
-        _collapseProgress,
-        _showLegalHoliday
-    ) { selectedDate, isCollapsed, isYearView, yearViewYear, collapseProgress, showLegalHoliday ->
+        combine(_selectedDate, _isCollapsed, _isYearView) { s, c, y -> Triple(s, c, y) },
+        combine(_yearViewYear, _collapseProgress, _showLegalHoliday) { y, p, h -> Triple(y, p, h) }
+    ) { (selectedDate, isCollapsed, isYearView), (yearViewYear, collapseProgress, showLegalHoliday) ->
         CalendarUiState(
             selectedDate = selectedDate,
             isCollapsed = isCollapsed,
@@ -212,8 +174,6 @@ class CalendarViewModel(
         if (_isYearView.value) {
             logd(TAG_VM, "[toggleYearView] ===== START Year→Month t=$t0 =====")
             composeTraceBeginSection("YearView→MonthView")
-            _yearViewProgress.value = 0f
-            logd(TAG_VM, "[toggleYearView] yearViewProgress=0 dt=${(System.nanoTime() - t0) / 1_000_000}ms")
             _isYearView.value = false
             logd(TAG_VM, "[toggleYearView] isYearView=false dt=${(System.nanoTime() - t0) / 1_000_000}ms")
             composeTraceEndSection()
@@ -223,8 +183,6 @@ class CalendarViewModel(
             composeTraceBeginSection("MonthView→YearView")
             _yearViewYear.value = _selectedDate.value.year
             logd(TAG_VM, "[toggleYearView] yearViewYear=${_yearViewYear.value} dt=${(System.nanoTime() - t0) / 1_000_000}ms")
-            _yearViewProgress.value = 1f
-            logd(TAG_VM, "[toggleYearView] yearViewProgress=1 dt=${(System.nanoTime() - t0) / 1_000_000}ms")
             _isYearView.value = true
             logd(TAG_VM, "[toggleYearView] isYearView=true dt=${(System.nanoTime() - t0) / 1_000_000}ms")
             composeTraceEndSection()
@@ -253,8 +211,6 @@ class CalendarViewModel(
         logd(TAG_VM, "[selectMonthFromYearView] selectedDate set dt=${(System.nanoTime() - t0) / 1_000_000}ms")
         _isYearView.value = false
         logd(TAG_VM, "[selectMonthFromYearView] isYearView=false dt=${(System.nanoTime() - t0) / 1_000_000}ms")
-        _yearViewProgress.value = 0f
-        logd(TAG_VM, "[selectMonthFromYearView] yearViewProgress=0 dt=${(System.nanoTime() - t0) / 1_000_000}ms")
         composeTraceEndSection()
         logd(TAG_VM, "[selectMonthFromYearView] ===== END total=${(System.nanoTime() - t0) / 1_000_000}ms =====")
     }

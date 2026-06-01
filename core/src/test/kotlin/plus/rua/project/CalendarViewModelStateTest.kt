@@ -53,11 +53,6 @@ class CalendarViewModelStateTest {
     }
 
     @Test
-    fun init_yearViewProgressDefaultsZero() {
-        assertEquals(0f, createViewModel().yearViewProgress.value, 0.001f)
-    }
-
-    @Test
     fun init_yearViewYearDefaultsToTodayYear() {
         assertEquals(2026, createViewModel().yearViewYear.value)
     }
@@ -375,7 +370,6 @@ class CalendarViewModelStateTest {
         assertFalse(vm.isYearView.value)
         vm.toggleYearView()
         assertTrue(vm.isYearView.value)
-        assertEquals(1f, vm.yearViewProgress.value, 0.001f)
     }
 
     @Test
@@ -385,7 +379,6 @@ class CalendarViewModelStateTest {
         assertTrue(vm.isYearView.value)
         vm.toggleYearView()
         assertFalse(vm.isYearView.value)
-        assertEquals(0f, vm.yearViewProgress.value, 0.001f)
     }
 
     @Test
