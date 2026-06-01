@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.number
 import plus.rua.project.LunarCache
 import plus.rua.project.ShiftKind
 
@@ -68,8 +69,7 @@ fun BottomCard(
 ) {
     val relativeDesc = relativeDayDescription(selectedDate, today)
 
-    @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
-    val solarDesc = "${selectedDate.monthNumber}月${selectedDate.day}日"
+    val solarDesc = "${selectedDate.month.number}月${selectedDate.day}日"
     val lunarDesc by produceState(
         initialValue = "",
         key1 = selectedDate

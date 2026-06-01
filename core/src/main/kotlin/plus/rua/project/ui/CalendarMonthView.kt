@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
@@ -105,7 +106,6 @@ fun CalendarMonthView(
     val uiState by viewModel.uiState.collectAsState()
     val selectedDate = uiState.selectedDate
     val currentYear = selectedDate.year
-    @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     val currentMonth = selectedDate.month.number
     val isCollapsed = uiState.isCollapsed
     val isYearView = uiState.isYearView
@@ -162,7 +162,6 @@ fun CalendarMonthView(
 
     // 折叠态 WeekPager 切月时，持续同步 CalendarPager 的 pagerState
     LaunchedEffect(selectedDate) {
-        @Suppress("DEPRECATION") // monthNumber 无替代 API
         val targetPage = yearMonthToPage(
             selectedDate.year, selectedDate.month.number,
             today.year, today.month.number
@@ -248,9 +247,8 @@ fun CalendarMonthView(
                             }
                             val onMonthChanged = remember(viewModel, today) {
                                 { year: Int, month: Int ->
-                                    @Suppress("DEPRECATION")
                                     val date = if (year == today.year && today.month.number == month) today
-                                    else LocalDate(year, month, 1)
+                                    else LocalDate(year, Month(month), 1)
                                     viewModel.selectDate(date)
                                 }
                             }
@@ -342,7 +340,6 @@ fun CalendarMonthView(
                                     val clickT = System.nanoTime()
                                     logd("AnimLog") { "[YearGridView] MonthClick month=$month year=$pageYear t=$clickT" }
                                     viewModel.selectMonthFromYearView(month)
-                                    @Suppress("DEPRECATION") // monthNumber 无替代 API
                                     val targetPage = yearMonthToPage(
                                         yearViewYear, month,
                                         today.year, today.month.number

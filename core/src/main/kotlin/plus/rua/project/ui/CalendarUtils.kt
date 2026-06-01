@@ -3,6 +3,7 @@ package plus.rua.project.ui
 import com.tyme.solar.SolarDay
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Month
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.minus
 import kotlinx.datetime.number
@@ -60,10 +61,10 @@ data class MonthGridInfo(
  * @return 月份网格信息
  */
 fun getMonthGridInfo(year: Int, month: Int): MonthGridInfo {
-    val firstOfMonth = LocalDate(year, month, 1)
+    val firstOfMonth = LocalDate(year, Month(month), 1)
     val offset = firstOfMonth.dayOfWeek.ordinal
     val startDate = firstOfMonth.minus(DatePeriod(days = offset))
-    val nextMonth = if (month == 12) LocalDate(year + 1, 1, 1) else LocalDate(year, month + 1, 1)
+    val nextMonth = if (month == 12) LocalDate(year + 1, 1, 1) else LocalDate(year, Month(month + 1), 1)
     val daysInMonth = nextMonth.minus(DatePeriod(days = 1)).day
     val rows = ((offset + daysInMonth - 1) / 7) + 1
     val totalDays = rows * 7
@@ -90,8 +91,6 @@ fun calculateWeeksCount(year: Int, month: Int): Int {
  */
 fun calculateWeeksCountForPage(page: Int, today: LocalDate): Int {
     val initialYear = today.year
-
-    @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     val initialMonth = today.month.number
     val offset = page - START_PAGE
     val totalMonths = initialYear * 12 + (initialMonth - 1) + offset
@@ -190,9 +189,8 @@ fun relativeDayDescription(selectedDate: LocalDate, today: LocalDate): String {
  * @param date 公历日期
  * @return 农历日期描述
  */
-@Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
 fun formatLunarDate(date: LocalDate): String {
-    val solarDay = SolarDay.fromYmd(date.year, date.monthNumber, date.day)
+    val solarDay = SolarDay.fromYmd(date.year, date.month.number, date.day)
     val lunarDay = solarDay.getLunarDay()
     val lunarMonth = lunarDay.getLunarMonth()
     return "农历${lunarMonth.getName()}${lunarDay.getName()}"

@@ -4,6 +4,7 @@ import com.tyme.solar.SolarDay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.number
 
 /**
  * 农历/节气/节假日信息缓存。
@@ -18,13 +19,11 @@ class LunarCache(
 ) {
     private val mutex = Mutex()
 
-    @Suppress("DEPRECATION")
     private val cache = LinkedHashMap<LocalDate, DayCellInfo>(256, 0.75f, true)
 
     /**
      * 获取指定日期的信息，缓存 miss 时计算。
      */
-    @Suppress("DEPRECATION") // monthNumber 无替代 API
     suspend fun getOrCompute(date: LocalDate): DayCellInfo = mutex.withLock {
         cache[date]?.let { return@withLock it }
         val computed = compute(date)
@@ -52,7 +51,6 @@ class LunarCache(
      *
      * 复用缓存中的 lunarMonthName 和 annotationText，避免重复创建 SolarDay。
      */
-    @Suppress("DEPRECATION") // monthNumber 无替代 API
     suspend fun formatLunarDate(date: LocalDate): String {
         val info = getOrCompute(date)
         val dayText = info.annotationText.removeSuffix("月")
@@ -71,9 +69,8 @@ class LunarCache(
         }
     }
 
-    @Suppress("DEPRECATION") // monthNumber 无替代 API
     private fun compute(date: LocalDate): DayCellInfo {
-        val solarDay = SolarDay.fromYmd(date.year, date.monthNumber, date.day)
+        val solarDay = SolarDay.fromYmd(date.year, date.month.number, date.day)
         val holidayBadge = solarDay.getLegalHoliday()?.let { if (it.isWork()) "班" else "休" }
         val lunarDay = solarDay.getLunarDay()
         val lunarMonth = lunarDay.getLunarMonth()

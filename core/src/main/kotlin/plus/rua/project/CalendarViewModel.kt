@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.minus
@@ -100,8 +101,6 @@ class CalendarViewModel(
         // 预计算当前月前后各 1 个月（在协程中异步执行）
         val currentYear = today.year
         val currentMonth = today.month.number
-
-        @Suppress("DEPRECATION") // monthNumber 无替代 API
         val monthsToPrecompute = listOf(
             currentMonth - 1 to currentYear,
             currentMonth to currentYear,
@@ -135,7 +134,6 @@ class CalendarViewModel(
     private val _collapseProgress = MutableStateFlow(0f)
     val collapseProgress: StateFlow<Float> = _collapseProgress.asStateFlow()
 
-    @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     val currentMonth: Int get() = selectedDate.value.month.number
 
     val currentYear: Int get() = selectedDate.value.year
@@ -244,13 +242,12 @@ class CalendarViewModel(
     /**
      * 从年视图选择月份后返回月视图。
      */
-    @Suppress("DEPRECATION") // monthNumber 无替代 API
     fun selectMonthFromYearView(month: Int) {
         val t0 = System.nanoTime()
         logd(TAG_VM, "[selectMonthFromYearView] ===== START month=$month t=$t0 =====")
         composeTraceBeginSection("YearView:SelectMonth")
         val date = if (_yearViewYear.value == today.year && today.month.number == month) today
-        else LocalDate(_yearViewYear.value, month, 1)
+        else LocalDate(_yearViewYear.value, Month(month), 1)
         logd(TAG_VM, "[selectMonthFromYearView] targetDate=$date dt=${(System.nanoTime() - t0) / 1_000_000}ms")
         _selectedDate.value = date
         logd(TAG_VM, "[selectMonthFromYearView] selectedDate set dt=${(System.nanoTime() - t0) / 1_000_000}ms")
@@ -376,7 +373,6 @@ class CalendarViewModel(
      * @param month 月份（1-12）
      * @return 日历网格列表，每项包含日期、是否当月、是否今天、是否选中
      */
-    @Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
     fun getMonthDays(year: Int, month: Int): List<CalendarDay> {
         composeTraceBeginSection("getMonthDays:$year-$month")
         val info = getMonthGridInfo(year, month)

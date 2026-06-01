@@ -3,6 +3,7 @@ package plus.rua.project
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.number
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -73,8 +74,7 @@ class CalendarViewModelTest {
         val vm = createViewModel()
         val days = vm.getMonthDays(2026, 5)
         assertFalse(days[0].isCurrentMonth)
-        @Suppress("DEPRECATION") // monthNumber — needed for Int comparison
-        assertEquals(4, days[0].date.monthNumber)
+        assertEquals(4, days[0].date.month.number)
         assertEquals(27, days[0].date.day)
     }
 
@@ -84,8 +84,7 @@ class CalendarViewModelTest {
         val days = vm.getMonthDays(2026, 5)
         assertTrue(days[4].isCurrentMonth)
         assertEquals(1, days[4].date.day)
-        @Suppress("DEPRECATION") // monthNumber — needed for Int comparison
-        assertEquals(5, days[4].date.monthNumber)
+        assertEquals(5, days[4].date.month.number)
     }
 
     @Test

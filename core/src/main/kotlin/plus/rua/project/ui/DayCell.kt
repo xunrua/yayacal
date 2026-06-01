@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.number
 import plus.rua.project.DayCellInfo
 import plus.rua.project.LunarCache
 import plus.rua.project.ShiftKind
@@ -265,11 +266,10 @@ private fun DayCellImpl(
             modifier = Modifier
                 .fillMaxSize()
                 .semantics {
-                    @Suppress("DEPRECATION")
                     contentDescription = if (isToday) {
-                        "今天 ${date.year}年${date.monthNumber}月${date.day}日"
+                        "今天 ${date.year}年${date.month.number}月${date.day}日"
                     } else {
-                        "${date.year}年${date.monthNumber}月${date.day}日"
+                        "${date.year}年${date.month.number}月${date.day}日"
                     }
                 }
                 .clip(CircleShape)

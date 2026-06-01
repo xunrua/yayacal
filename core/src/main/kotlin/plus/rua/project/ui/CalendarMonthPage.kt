@@ -26,6 +26,7 @@ import plus.rua.project.composeTraceEndSection
 import plus.rua.project.util.logd
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Month
 import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
@@ -290,12 +291,11 @@ data class HolidayEdgeInfo(
     val isEnd: Boolean
 )
 
-@Suppress("DEPRECATION") // monthNumber 无替代 API，kotlinx-datetime 尚未提供新接口
 private fun generateMonthDays(year: Int, month: Int): List<DayData> {
-    val firstOfMonth = LocalDate(year, month, 1)
+    val firstOfMonth = LocalDate(year, Month(month), 1)
     val offset = firstOfMonth.dayOfWeek.ordinal
     val startDate = firstOfMonth.minus(DatePeriod(days = offset))
-    val nextMonth = if (month == 12) LocalDate(year + 1, 1, 1) else LocalDate(year, month + 1, 1)
+    val nextMonth = if (month == 12) LocalDate(year + 1, 1, 1) else LocalDate(year, Month(month + 1), 1)
     val daysInMonth = nextMonth.minus(DatePeriod(days = 1)).day
     val rows = ((offset + daysInMonth - 1) / 7) + 1
     val totalDays = rows * 7

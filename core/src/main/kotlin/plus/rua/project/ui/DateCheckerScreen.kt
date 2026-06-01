@@ -74,6 +74,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.daysUntil
+import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
@@ -689,13 +690,12 @@ private fun LocalDate.toEpochMillis(): Long =
 private fun Long.toLocalDate(): LocalDate =
     Instant.fromEpochMilliseconds(this).toLocalDateTime(TimeZone.UTC).date
 
-@Suppress("DEPRECATION") // monthNumber/dayOfMonth 无替代 API，kotlinx-datetime 尚未提供新接口
 private fun LocalDate.formatChinese(): String =
-    "${year}年${monthNumber}月${dayOfMonth}日"
+    "${year}年${month.number}月${day}日"
 
-@Suppress("DEPRECATION", "Unused") // monthNumber/dayOfMonth 无替代 API
+@Suppress("Unused")
 private fun LocalDate.formatShortChinese(): String =
-    "${monthNumber}月${dayOfMonth}日"
+    "${month.number}月${day}日"
 
 private fun LocalDate.dayOfWeekChinese(): String = when (dayOfWeek.ordinal) {
     0 -> "周一"
